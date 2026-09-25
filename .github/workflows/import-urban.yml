@@ -1,0 +1,29 @@
+name: Import Urban Assets
+on:
+  push:
+    paths:
+      - '.github/workflows/import-urban.yml'
+      - 'game.js'
+  workflow_dispatch:
+permissions:
+  contents: write
+jobs:
+  import:
+    if: ${{ !contains(github.event.head_commit.message, 'Import Kenney Urban spritesheet') }}
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - name: Download CC0 Kenney RPG Urban Pack
+        run: |
+          mkdir -p assets/urban /tmp/urban
+          curl -L --fail --retry 3 'https://opengameart.org/sites/default/files/kenney_RPGurbanPack.zip' -o /tmp/urban.zip
+          unzip -q /tmp/urban.zip -d /tmp/urban
+          cp /tmp/urban/Tilemap/tilemap_packed.png assets/urban/tilemap_packed.png
+      - name: Commit spritesheet
+        run: |
+          git config user.name "github-actions[bot]"
+          git config user.email "41898282+github-actions[bot]@users.noreply.github.com"
+          git add assets/urban/tilemap_packed.png
+          git diff --cached --quiet && exit 0
+          git commit -m "Import Kenney Urban spritesheet"
+          git push
