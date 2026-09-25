@@ -1,0 +1,8 @@
+<!doctype html>
+<html lang="fi"><head><meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1,user-scalable=no"><title>Hoods of Helsinki</title><link rel="stylesheet" href="style.css"></head>
+<body><main><header><h1>HOODS OF HELSINKI</h1><div id="hud"><span id="place">TORPPARINMÄKI</span><span>LV <b id="lvl">1</b></span><span>HP <b id="hp">30</b>/30</span><span>€ <b id="cash">12</b></span></div></header>
+<canvas id="game" width="480" height="320"></canvas>
+<div id="message">Torpparinmäki. Täällä ei tapahdu mitään. Ja juuri siksi täällä on hyvä olla.</div>
+<div class="controls"><button data-k="ArrowUp">▲</button><div><button data-k="ArrowLeft">◀</button><button data-k="ArrowDown">▼</button><button data-k="ArrowRight">▶</button></div><button id="act">A</button></div>
+<div id="battle" class="hidden"><div class="panel"><h2 id="enemyName"></h2><div id="enemyArt"></div><p>HP <span id="enemyHp"></span></p><div class="actions"><button id="attack">HYÖKKÄÄ</button><button id="talk">PUHU</button><button id="run">PAKENE</button></div><p id="battleLog"></p></div></div>
+</main><script src="game.js"></script></body></html>
