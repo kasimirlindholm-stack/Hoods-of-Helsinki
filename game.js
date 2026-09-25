@@ -109,6 +109,7 @@ function player(){
  if(side){rect(X+(p.face==='right'?4:-6),Y-15,2,2,'#211d1b')}
  const bw=30,bx=X-bw/2,by=Y-29,ratio=Math.max(0,Math.min(1,p.hp/p.max));rect(bx-1,by-1,bw+2,6,'#111');rect(bx,by,bw,4,'#52272c');rect(bx,by,bw*ratio,4,ratio>.5?'#64b56b':ratio>.25?'#d0a34f':'#c85858');
 }
+function camera(){if(area==='home')return{x:0,y:0};let mw=maps.malmi[0].length*T,mh=maps.malmi.length*T;return{x:Math.round(Math.max(0,Math.min(mw-W,p.x-W/2))),y:Math.round(Math.max(0,Math.min(mh-H,p.y-H/2)))}}
 function drawMalmiDetails(cam){
  function treeWorld(tx,ty){let x=Math.round(tx*T-cam.x),y=Math.round(ty*T-cam.y);rect(x+13,y+15,6,17,'#403a31');rect(x+5,y+5,22,17,'#334d3c');rect(x+9,y+1,14,14,'#3f6047')}
  function lampWorld(tx,ty){let x=Math.round(tx*T-cam.x),y=Math.round(ty*T-cam.y);rect(x+15,y+7,3,25,'#202423');rect(x+9,y+4,15,5,'#555c5a');rect(x+12,y+3,9,3,'#d4b96e')}
