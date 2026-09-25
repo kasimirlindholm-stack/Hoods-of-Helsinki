@@ -6,7 +6,8 @@ const enemies=[{name:'Pultsari',hp:12,atk:3,xp:5,cash:3,icon:'🥴',line:'“Onk
 function rect(x,y,w,h,col){g.fillStyle=col;g.fillRect(Math.round(x),Math.round(y),Math.round(w),Math.round(h))}
 function px(x,y,col){rect(x,y,2,2,col)}
 function line(x,y,w,h,c){rect(x,y,w,h,c)}
-function stone(x,y){rect(x+5,y+16,22,10,'#55605a');rect(x+8,y+12,17,8,'#737e76');rect(x+11,y+11,10,3,'#8d978e')}\nfunction flower(x,y){rect(x,y,2,2,'#f4e8a0');rect(x+2,y+2,2,2,'#d77878');rect(x,y+3,1,3,'#37683d')}
+function stone(x,y){rect(x+5,y+16,22,10,'#55605a');rect(x+8,y+12,17,8,'#737e76');rect(x+11,y+11,10,3,'#8d978e')}
+function flower(x,y){rect(x,y,2,2,'#f4e8a0');rect(x+2,y+2,2,2,'#d77878');rect(x,y+3,1,3,'#37683d')}
 function bush(x,y){rect(x+2,y+10,28,13,'#315f39');rect(x+5,y+5,22,14,'#477d45');rect(x+9,y+3,9,5,'#5d9555');rect(x+6,y+9,3,3,'#73a766');rect(x+21,y+11,3,3,'#2a5533')}
 function lamp(x,y){rect(x+15,y+8,3,22,'#3b3b38');rect(x+12,y+6,9,4,'#4b4b46');rect(x+13,y+3,7,5,'#ffe59a');rect(x+14,y+4,5,3,'#fff1b9')}
 function tile(ch,x,y){
