@@ -62,13 +62,21 @@ function urbanTile(ch,x,y,gx,gy){
    rect(x+14,y+19,4,13,'#242827')
  }
  if(ch==='A'){rect(x,y,T,T,'#555b59');}
+ if(ch==='s'){rect(x,y,T,T,'#555b59');rect(x,y+27,T,5,'#676d69');}
+ if(ch==='r'){rect(x,y,T,T,'#303534');rect(x,y,4,T,'#6c716f');rect(x+28,y,4,T,'#6c716f');if(gy%2===0)rect(x+15,y+7,2,14,'#b8ad72');}
+ if(ch==='t'){rect(x,y,T,T,'#77736b');for(let i=0;i<3;i++)rect(x+3+i*10,y+3,7,7,'#8d887e');}
+ if(ch==='P'){rect(x,y,T,T,'#6d6257');rect(x+2,y+5,28,24,'#b9895f');rect(x+5,y+8,22,5,'#efe1bd');rect(x+7,y+16,18,11,'#5a3430');rect(x+10,y+18,12,7,'#d9b06a');}
+ if(ch==='N'){rect(x,y,T,T,'#292e2e');rect(x+2,y+3,28,27,'#4e5556');rect(x+5,y+6,22,8,'#718083');rect(x+5,y+17,22,10,'#353b3c');rect(x+8,y+19,6,8,'#8aa4a7');rect(x+18,y+19,6,8,'#8aa4a7');}
+ if(ch==='M'){rect(x,y,T,T,'#2b3030');rect(x+2,y+4,28,26,'#666b68');rect(x+4,y+6,24,5,'#4d7590');rect(x+5,y+15,22,12,'#32393a');rect(x+7,y+17,18,8,'#789093');}
+ if(ch==='p'){rect(x,y,T,T,'#3c4140');rect(x+3,y+3,12,9,'#5f6664');rect(x+18,y+3,11,9,'#5f6664');rect(x+3,y+18,12,9,'#5f6664');rect(x+18,y+18,11,9,'#5f6664');rect(x+5,y+5,8,5,'#aeb2aa');rect(x+20,y+20,7,5,'#777f87');}
+ if(ch==='='){rect(x,y,T,T,'#77736b');for(let i=0;i<4;i++)rect(x+2+i*8,y,4,T,'#d7d2c5');}
  if(ch==='<'||ch==='>'){
    rect(x,y,T,T,'#565348');rect(x+3,y+3,26,26,'#242827');g.fillStyle='#d7c77e';g.font='bold 18px monospace';g.fillText(ch,x+10,y+22)
  }
  // Coherent streets: broad asphalt lanes with continuous sidewalks and markings.
  if(ch==='.'){
-   const vertical=(gx>=14&&gx<=16)||(gx>=25&&gx<=27);
-   const horizontal=(gy>=5&&gy<=6)||(gy>=10&&gy<=11);
+   const vertical=false;
+   const horizontal=false;
    if(vertical||horizontal){
      rect(x,y,T,T,'#303534');
      if(vertical){rect(x,y,5,T,'#6b706d');rect(x+27,y,5,T,'#6b706d');if(gy%2===0)rect(x+15,y+8,2,12,'#b3aa76')}
@@ -129,9 +137,9 @@ function draw(){
  g.clearRect(0,0,W,H);rect(0,0,W,H,area==='home'?'#719b58':'#3f4543');
  const cam=camera(),map=maps[area],sx=Math.floor(cam.x/T),sy=Math.floor(cam.y/T),ex=Math.min(map[0].length,sx+C+2),ey=Math.min(map.length,sy+R+2);
  for(let y=sy;y<ey;y++)for(let x=sx;x<ex;x++)tile(map[y][x],x*T-cam.x,y*T-cam.y,x,y);
- if(area==='home'){stone(38,188);bush(272,40);bush(304,40);flower(220,76);flower(330,92);flower(92,180);lamp(205,224);lamp(365,224);rect(80,238,60,4,'#5f744b');rect(82,234,3,14,'#76563b');rect(106,234,3,14,'#76563b');rect(132,234,3,14,'#76563b')}else{let cam=camera();g.fillStyle='#c5c8c3';g.font='bold 12px monospace';g.fillText('MALMIN ASEMA',4*T-cam.x,2*T-cam.y);g.fillText('PUISTO',3*T-cam.x,7*T-cam.y);g.fillText('ALIKULKU',10*T-cam.x,12*T-cam.y)}
+ if(area==='home'){stone(38,188);bush(272,40);bush(304,40);flower(220,76);flower(330,92);flower(92,180);lamp(205,224);lamp(365,224);rect(80,238,60,4,'#5f744b');rect(82,234,3,14,'#76563b');rect(106,234,3,14,'#76563b');rect(132,234,3,14,'#76563b')}else{let cam=camera();g.fillStyle='#c5c8c3';g.font='bold 11px monospace';g.fillText('YLÄ-MALMIN TORI',3*T-cam.x,7*T-cam.y);g.fillText('ASEMA',20*T-cam.x,7*T-cam.y);g.fillText('ALA-MALMI',27*T-cam.x,14*T-cam.y)}
  if(area==='home'){rect(0,0,W,18,'#efd37f');g.fillStyle='#302d22';g.font='10px monospace';g.fillText('TORPPARINMÄKI — THREAT LEVEL: EI TÄÄLLÄ MITÄÄN TAPAHDU',8,12)}
- else{rect(0,0,W,18,'#252928');g.fillStyle='#b8bbb7';g.font='10px monospace';g.fillText('MALMI — THREAT LEVEL: EPÄMÄÄRÄINEN',8,12);g.strokeStyle='#aeb8b833';for(let i=0;i<18;i++){let rx=(i*73+performance.now()/12)%520-20,ry=(i*47+performance.now()/8)%340;g.beginPath();g.moveTo(rx,ry);g.lineTo(rx-5,ry+12);g.stroke()}}
+ else{rect(0,0,W,18,'#252928');g.fillStyle='#b8bbb7';g.font='10px monospace';g.fillText(malmiZone()==='ala'?'ALA-MALMI — THREAT LEVEL: KORKEA':'YLÄ-MALMI — THREAT LEVEL: MATALA',8,12);g.strokeStyle='#aeb8b833';for(let i=0;i<18;i++){let rx=(i*73+performance.now()/12)%520-20,ry=(i*47+performance.now()/8)%340;g.beginPath();g.moveTo(rx,ry);g.lineTo(rx-5,ry+12);g.stroke()}}
  try{drawSurvivor()}catch(err){console.error('survivor render',err)}finally{player()}
  // Player render is protected: optional effects/mobs cannot prevent the character from drawing.
 }
@@ -218,7 +226,7 @@ function drawSurvivor(){
  g.fillStyle='#efe2aa';g.font='bold 10px monospace';g.fillText('KOFF-THROW '+Math.max(0,skillClock).toFixed(1)+'s',8,H-8);
  if(bagOpen){rect(55,35,370,245,'#171a18ee');g.strokeStyle='#c7b574';g.lineWidth=3;g.strokeRect(55,35,370,245);g.fillStyle='#eadca6';g.font='bold 18px monospace';g.fillText('BAG',75,65);g.font='12px monospace';let y=92,items=Object.entries(bag);if(!items.length)g.fillText('(tyhjä)',75,y);for(const [name,n] of items){g.fillText(name+'  x'+n,75,y);y+=22}g.fillStyle='#9fa69f';g.font='10px monospace';g.fillText('A = sulje',75,258)}
 }
-function msg(t){document.querySelector('#message').textContent=t}function hud(){place.textContent=area==='home'?'TORPPARINMÄKI':'MALMI';hp.textContent=p.hp;lvl.textContent=p.lvl;cash.textContent=p.cash}
+function msg(t){document.querySelector('#message').textContent=t}function hud(){place.textContent=area==='home'?'TORPPARINMÄKI':(malmiZone()==='ala'?'ALA-MALMI':'YLÄ-MALMI');hp.textContent=p.hp;lvl.textContent=p.lvl;cash.textContent=p.cash}
 function startBattle(){battle=true;release();e={...enemies[Math.floor(Math.random()*enemies.length)]};enemyName.textContent=e.name;enemyArt.textContent=e.icon;enemyHp.textContent=e.hp;battleLog.textContent=e.line;document.querySelector('#battle').classList.remove('hidden')}
 function endBattle(){battle=false;document.querySelector('#battle').classList.add('hidden');hud()}
 attack.onclick=()=>{if(!battle)return;let dmg=4+Math.floor(Math.random()*5)+p.lvl;e.hp-=dmg;if(e.hp<=0){p.cash+=e.cash;p.xp+=e.xp;msg(e.name+' kaatui. +'+e.xp+' XP, +'+e.cash+' €');if(p.xp>=p.lvl*12){p.xp=0;p.lvl++;p.max+=5;p.hp=p.max;msg('LEVEL UP! Taso '+p.lvl+'.')}endBattle();return}p.hp-=Math.max(1,e.atk-Math.floor(p.lvl/2));enemyHp.textContent=e.hp;hp.textContent=p.hp;battleLog.textContent='Osuit '+dmg+'. Vastaisku. HP: '+p.hp;if(p.hp<=0){p.hp=p.max;area='home';p.x=7.5*T;p.y=5.5*T;p.cash=Math.max(0,p.cash-5);msg('Heräsit Torpparinmäessä. Joku oli vienyt 5 €.');endBattle()}};
