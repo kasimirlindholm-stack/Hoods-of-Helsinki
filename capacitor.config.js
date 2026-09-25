@@ -3,7 +3,7 @@ const config = {
   appName: 'Hoods of Helsinki',
   webDir: 'www',
   server: {
-    url: 'https://kasimirlindholm-stack.github.io/Hoods-of-Helsinki/?native=1&shell=22',
+    url: 'https://kasimirlindholm-stack.github.io/Hoods-of-Helsinki/index.html?shell=25',
     cleartext: false
   },
   android: { backgroundColor: '#090b0a' }
