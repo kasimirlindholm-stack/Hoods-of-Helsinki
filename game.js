@@ -61,6 +61,7 @@ function draw(){
  if(area==='home'){stone(38,188);bush(272,40);bush(304,40);flower(220,76);flower(330,92);flower(92,180);lamp(205,224);lamp(365,224);rect(80,238,60,4,'#5f744b');rect(82,234,3,14,'#76563b');rect(106,234,3,14,'#76563b');rect(132,234,3,14,'#76563b')}else{let cam=camera();g.fillStyle='#c5c8c3';g.font='bold 12px monospace';g.fillText('MALMIN ASEMA',4*T-cam.x,2*T-cam.y);g.fillText('PUISTO',3*T-cam.x,7*T-cam.y);g.fillText('ALIKULKU',10*T-cam.x,12*T-cam.y)}
  if(area==='home'){rect(0,0,W,18,'#efd37f');g.fillStyle='#302d22';g.font='10px monospace';g.fillText('TORPPARINMÄKI — THREAT LEVEL: EI TÄÄLLÄ MITÄÄN TAPAHDU',8,12)}
  else{rect(0,0,W,18,'#252928');g.fillStyle='#b8bbb7';g.font='10px monospace';g.fillText('MALMI — THREAT LEVEL: EPÄMÄÄRÄINEN',8,12);g.strokeStyle='#aeb8b833';for(let i=0;i<18;i++){let rx=(i*73+performance.now()/12)%520-20,ry=(i*47+performance.now()/8)%340;g.beginPath();g.moveTo(rx,ry);g.lineTo(rx-5,ry+12);g.stroke()}}
+ drawSurvivor();
  player()
 }
 function cellAt(x,y){let cx=Math.floor(x/T),cy=Math.floor(y/T);return maps[area][cy]?.[cx]||'B'}
@@ -78,12 +79,62 @@ function movement(dt){
  let moved=Math.hypot(p.x-ox,p.y-oy);walk+=moved/8;if(Math.abs(dx)>Math.abs(dy))p.face=dx>0?'right':'left';else p.face=dy>0?'down':'up';
  let ch=cellAt(p.x,p.y);if(portalLock<=0&&area==='home'&&ch==='>'){area='malmi';p.x=25.5*T;p.y=9.5*T;portalLock=1.5;release();msg('MALMI. Sade alkaa melkein välittömästi. Tutki asemaa, puistoa ja alikulkua.');}
  else if(portalLock<=0&&area==='malmi'&&ch==='<'){area='home';p.x=7.5*T;p.y=5.5*T;p.hp=p.max;portalLock=1.5;release();msg('Takaisin Torpparinmäessä. HP palautui.');}
- if(area==='malmi'&&ch==='z'){encDist+=moved;if(encDist>45){encDist=0;if(Math.random()<.38)startBattle()}}else encDist=0;hud()
+ hud()
+}
+// --- SURVIVOR COMBAT (Build 16) ---
+let mobs=[],shots=[],drops=[],bursts=[],spawnClock=0,skillClock=0,hitClock=0;
+const skill={name:'KOFF-THROW',cooldown:1.35,speed:235,damage:9,radius:46};
+const lootTable=[
+ {name:'Panttitölkki',chance:0.18,value:1,col:'#d8c36a'},
+ {name:'Makkaraperunat',chance:0.035,heal:8,col:'#d28b55'},
+ {name:'Mystinen kultakorkki',chance:0.000001,value:5000,col:'#f5df72'} // 0.0001 %
+];
+function safeSpot(x,y){return !'TBH#'.includes(cellAt(x,y))}
+function spawnMob(){
+ if(area!=='malmi'||mobs.length>45)return;
+ let a=Math.random()*Math.PI*2,d=250+Math.random()*100,x=p.x+Math.cos(a)*d,y=p.y+Math.sin(a)*d;
+ x=Math.max(T,Math.min(maps.malmi[0].length*T-T,x));y=Math.max(T,Math.min(maps.malmi.length*T-T,y));
+ if(!safeSpot(x,y))return;
+ let roll=Math.random(),type=roll<.58?{name:'Pultsari',hp:15,sp:35,dmg:4,col:'#9b765c',xp:2}:roll<.88?{name:'Roadman',hp:24,sp:48,dmg:6,col:'#45445c',xp:4}:{name:'Vihainen mummo',hp:34,sp:27,dmg:8,col:'#79566e',xp:6};
+ mobs.push({...type,x,y,max:type.hp,r:10});
+}
+function fireKoff(){
+ if(area!=='malmi'||!mobs.length)return;
+ let target=mobs.reduce((a,b)=>Math.hypot(b.x-p.x,b.y-p.y)<Math.hypot(a.x-p.x,a.y-p.y)?b:a),dx=target.x-p.x,dy=target.y-p.y,d=Math.hypot(dx,dy)||1;
+ shots.push({x:p.x,y:p.y,vx:dx/d*skill.speed,vy:dy/d*skill.speed,life:2.2,r:5});
+}
+function explode(x,y){
+ bursts.push({x,y,r:4,life:.28});
+ for(let i=mobs.length-1;i>=0;i--){let m=mobs[i];if(Math.hypot(m.x-x,m.y-y)<=skill.radius){m.hp-=skill.damage;if(m.hp<=0)killMob(i)}}
+}
+function killMob(i){
+ let m=mobs[i];mobs.splice(i,1);p.xp+=m.xp;p.cash+=Math.random()<.35?1:0;
+ for(const it of lootTable)if(Math.random()<it.chance)drops.push({x:m.x+(Math.random()-.5)*12,y:m.y+(Math.random()-.5)*12,item:it,life:45});
+ if(p.xp>=p.lvl*15){p.xp-=p.lvl*15;p.lvl++;p.max+=3;p.hp=Math.min(p.max,p.hp+5);msg('LEVEL UP! Taso '+p.lvl+'. Koff-Throw vahvistuu.');skill.damage+=1.5}
+}
+function survivor(dt){
+ if(area!=='malmi'){mobs=[];shots=[];drops=[];bursts=[];return}
+ spawnClock-=dt;skillClock-=dt;hitClock-=dt;
+ if(spawnClock<=0){spawnClock=.8+Math.random()*.55;spawnMob()}
+ if(skillClock<=0){skillClock=skill.cooldown;fireKoff()}
+ for(let i=mobs.length-1;i>=0;i--){let m=mobs[i],dx=p.x-m.x,dy=p.y-m.y,d=Math.hypot(dx,dy)||1;m.x+=dx/d*m.sp*dt;m.y+=dy/d*m.sp*dt;if(d<18&&hitClock<=0){p.hp-=m.dmg;hitClock=.65;msg(m.name+' osui! HP '+p.hp+'/'+p.max);if(p.hp<=0){p.hp=p.max;p.cash=Math.max(0,p.cash-5);area='home';p.x=7.5*T;p.y=5.5*T;mobs=[];shots=[];drops=[];msg('Heräsit Torpparinmäessä. Malmi voitti tällä kertaa.');break}}}
+ for(let i=shots.length-1;i>=0;i--){let q=shots[i];q.x+=q.vx*dt;q.y+=q.vy*dt;q.life-=dt;let hit=mobs.find(m=>Math.hypot(m.x-q.x,m.y-q.y)<m.r+q.r);if(hit||q.life<=0){explode(q.x,q.y);shots.splice(i,1)}}
+ for(let i=drops.length-1;i>=0;i--){let d=drops[i];d.life-=dt;if(Math.hypot(d.x-p.x,d.y-p.y)<22){if(d.item.heal){p.hp=Math.min(p.max,p.hp+d.item.heal);msg(d.item.name+' +'+d.item.heal+' HP')}if(d.item.value){p.cash+=d.item.value;msg('Löysit: '+d.item.name+' (+'+d.item.value+' €)')}drops.splice(i,1)}else if(d.life<=0)drops.splice(i,1)}
+ for(let i=bursts.length-1;i>=0;i--){bursts[i].life-=dt;bursts[i].r+=150*dt;if(bursts[i].life<=0)bursts.splice(i,1)}
+ hud();
+}
+function drawSurvivor(){
+ if(area!=='malmi')return;let cam=camera();
+ for(const d of drops){rect(d.x-cam.x-4,d.y-cam.y-4,8,8,d.item.col);rect(d.x-cam.x-2,d.y-cam.y-7,4,3,'#f4edc5')}
+ for(const m of mobs){let x=m.x-cam.x,y=m.y-cam.y;rect(x-8,y-10,16,18,m.col);rect(x-6,y-15,12,8,'#c69a7a');rect(x-8,y-20,16,5,'#292725');rect(x-9,y+9,18,3,'#0007');rect(x-9,y-25,18,3,'#191b1a');rect(x-9,y-25,18*(m.hp/m.max),3,'#b9534d')}
+ for(const q of shots){let x=q.x-cam.x,y=q.y-cam.y;rect(x-3,y-7,6,13,'#c9b35b');rect(x-2,y-9,4,3,'#ded7b5');rect(x-2,y-3,4,2,'#8b3d34')}
+ for(const b of bursts){g.strokeStyle='#e9d58a';g.lineWidth=3;g.beginPath();g.arc(b.x-cam.x,b.y-cam.y,b.r,0,Math.PI*2);g.stroke()}
+ g.fillStyle='#efe2aa';g.font='bold 10px monospace';g.fillText('KOFF-THROW '+Math.max(0,skillClock).toFixed(1)+'s',8,H-8)
 }
 function msg(t){document.querySelector('#message').textContent=t}function hud(){place.textContent=area==='home'?'TORPPARINMÄKI':'MALMI';hp.textContent=p.hp;lvl.textContent=p.lvl;cash.textContent=p.cash}
 function startBattle(){battle=true;release();e={...enemies[Math.floor(Math.random()*enemies.length)]};enemyName.textContent=e.name;enemyArt.textContent=e.icon;enemyHp.textContent=e.hp;battleLog.textContent=e.line;document.querySelector('#battle').classList.remove('hidden')}
 function endBattle(){battle=false;document.querySelector('#battle').classList.add('hidden');hud()}
 attack.onclick=()=>{if(!battle)return;let dmg=4+Math.floor(Math.random()*5)+p.lvl;e.hp-=dmg;if(e.hp<=0){p.cash+=e.cash;p.xp+=e.xp;msg(e.name+' kaatui. +'+e.xp+' XP, +'+e.cash+' €');if(p.xp>=p.lvl*12){p.xp=0;p.lvl++;p.max+=5;p.hp=p.max;msg('LEVEL UP! Taso '+p.lvl+'.')}endBattle();return}p.hp-=Math.max(1,e.atk-Math.floor(p.lvl/2));enemyHp.textContent=e.hp;hp.textContent=p.hp;battleLog.textContent='Osuit '+dmg+'. Vastaisku. HP: '+p.hp;if(p.hp<=0){p.hp=p.max;area='home';p.x=7.5*T;p.y=5.5*T;p.cash=Math.max(0,p.cash-5);msg('Heräsit Torpparinmäessä. Joku oli vienyt 5 €.');endBattle()}};
 talk.onclick=()=>{if(Math.random()<.3){msg(e.name+' päätti jättää asian sikseen.');endBattle()}else battleLog.textContent=e.name+': “Ei kiinnosta.”'};run.onclick=()=>{if(Math.random()<.65){msg('Poistuit tilanteesta ripeällä kävelyllä.');endBattle()}else battleLog.textContent='Et päässyt karkuun. Kiusaannuttavaa.'};
-act.onclick=()=>msg(area==='home'?'Torpparinmäki on epäilyttävän idyllinen. Malmi odottaa idässä →':'Kujilla kannattaa pitää silmät auki.');
-function loop(t){let dt=Math.min(.033,(t-last)/1000);last=t;movement(dt);draw();requestAnimationFrame(loop)}hud();requestAnimationFrame(loop);
+act.onclick=()=>msg(area==='home'?'Torpparinmäki on epäilyttävän idyllinen. Malmi odottaa idässä →':'KOFF-THROW tähtää automaattisesti lähimpään viholliseen. Liiku ja väistele!');
+function loop(t){let dt=Math.min(.033,(t-last)/1000);last=t;movement(dt);survivor(dt);draw();requestAnimationFrame(loop)}hud();requestAnimationFrame(loop);
