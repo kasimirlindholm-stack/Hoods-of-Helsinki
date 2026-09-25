@@ -30,8 +30,21 @@ function stone(x,y){rect(x+5,y+16,22,10,'#55605a');rect(x+8,y+12,17,8,'#737e76')
 function flower(x,y){rect(x,y,2,2,'#f4e8a0');rect(x+2,y+2,2,2,'#d77878');rect(x,y+3,1,3,'#37683d')}
 function bush(x,y){rect(x+2,y+10,28,13,'#315f39');rect(x+5,y+5,22,14,'#477d45');rect(x+9,y+3,9,5,'#5d9555');rect(x+6,y+9,3,3,'#73a766');rect(x+21,y+11,3,3,'#2a5533')}
 function lamp(x,y){rect(x+15,y+8,3,22,'#3b3b38');rect(x+12,y+6,9,4,'#4b4b46');rect(x+13,y+3,7,5,'#ffe59a');rect(x+14,y+4,5,3,'#fff1b9')}
+const urbanSheet=new Image();urbanSheet.src='assets/urban/tilemap_packed.png?v=21';
+function urban(id,x,y){if(!urbanSheet.complete||!urbanSheet.naturalWidth)return false;const sx=(id%27)*16,sy=Math.floor(id/27)*16;g.drawImage(urbanSheet,sx,sy,16,16,Math.round(x),Math.round(y),T,T);return true}
+function urbanTile(ch,x,y){
+ // Base pavement keeps every Malmi tile coherent; details are layered from the same 16x16 sheet.
+ let base=224;if(ch==='z')base=0;if(ch==='#')base=189;if(ch==='B')base=270;if(ch==='A')base=224;if(ch==='<'||ch==='>')base=224;
+ if(!urban(base,x,y))return false;
+ if(ch==='B'){urban(297,x,y);urban(324,x,y)}
+ if(ch==='A')urban(166,x,y);
+ if(ch==='z'&&(((x/T)+(y/T))%4===0))urban(234,x,y);
+ if(ch==='#'&&(((x/T)|0)%3===1))urban(217,x,y);
+ if(ch==='<'||ch==='>'){urban(421,x,y);g.fillStyle='#fff';g.font='bold 12px monospace';g.fillText(ch,x+12,y+20)}
+ return true
+}
 function tile(ch,x,y){
- const h=area==='home';rect(x,y,T,T,h?'#719b58':'#4b5250');
+ const h=area==='home';if(!h&&urbanTile(ch,x,y))return;rect(x,y,T,T,h?'#719b58':'#4b5250');
  if(h){for(let i=0;i<4;i++){let q=(x*3+y*7+i*11)%27;px(x+3+q,y+4+(q*5)%23,i%2?'#83aa67':'#628b4d')}}else{for(let i=0;i<3;i++){let q=(x*5+y*3+i*13)%27;px(x+2+q,y+5+(q*7)%22,'#5b625f')}}
  if(ch==='.'&&h){rect(x,y+12,T,10,'#bda875');rect(x,y+12,T,2,'#d0bd8b');rect(x,y+20,T,2,'#9e8c63');for(let i=0;i<3;i++)rect(x+4+i*11,y+16,6,2,'#d7c797');if(((x+y)/T)%3===0)flower(x+4,y+4)}
  if(ch==='T'){rect(x+12,y+16,7,15,h?'#684a31':'#393c38');rect(x+3,y+7,26,14,h?'#356b3b':'#303c36');rect(x+7,y+2,19,18,h?'#4e884d':'#3d4a41');rect(x+11,y,12,7,h?'#61985b':'#465449');rect(x+5,y+10,4,4,h?'#79ad68':'#566258')}
