@@ -1,14 +1,14 @@
 const c=document.querySelector('#game'),g=c.getContext('2d');g.imageSmoothingEnabled=false;
-const W=480,H=320,T=32,C=15,R=10;let area='home',battle=false,last=performance.now(),walk=0,encDist=0;
+const W=480,H=320,T=32,C=15,R=10;let area='home',battle=false,last=performance.now(),walk=0,encDist=0,portalLock=0;
 let p={x:7.5*T,y:5.5*T,r:8,hp:30,max:30,lvl:1,xp:0,cash:12,weapon:'Keppi',face:'down'};
 const maps={home:['TTTTTTTTTTTTTTT','T....TTT......T','T.H..T........T','T....T..H.....T','T.............T','T.............T','T.............T','T..H.......H..T','T..........>>>T','TTTTTTTTTTTTTTT'],malmi:['BBBBBBBBBBBBBBB','B..A....B.....B','B.###...B.zzz.B','B.......B.zzz.B','B..zz.........B','B....... ...A.B'.replace(' ',''),'B......####...B','B.zzz.........B','B.zzz...A..<<<B','BBBBBBBBBBBBBBB']};
 const enemies=[{name:'Pultsari',hp:12,atk:3,xp:5,cash:3,icon:'🥴',line:'“Onks heittää kahta euroa?”'},{name:'Vihainen mummo',hp:16,atk:4,xp:7,cash:5,icon:'👵',line:'“Nuoriso pilalla.”'},{name:'Roadman',hp:21,atk:5,xp:10,cash:8,icon:'🥷',line:'“Bro.”'}];let e=null;
-function rect(x,y,w,h,col){g.fillStyle=col;g.fillRect(x,y,w,h)}
+function rect(x,y,w,h,col){g.fillStyle=col;g.fillRect(Math.round(x),Math.round(y),Math.round(w),Math.round(h))}\nfunction px(x,y,col){rect(x,y,2,2,col)}
 function tile(ch,x,y){
- const h=area==='home';rect(x,y,T,T,h?'#79a15f':'#515958');
+ const h=area==='home';rect(x,y,T,T,h?'#719b58':'#4b5250');\n if(h){for(let i=0;i<4;i++){let q=(x*3+y*7+i*11)%27;px(x+3+q,y+4+(q*5)%23,i%2?'#83aa67':'#628b4d')}}else{for(let i=0;i<3;i++){let q=(x*5+y*3+i*13)%27;px(x+2+q,y+5+(q*7)%22,'#5b625f')}}
  if(ch==='.'&&h){rect(x,y+14,T,8,'#b9a777');rect(x+2,y+16,T-4,4,'#c9ba8b')}
- if(ch==='T'){rect(x+4,y+13,6,16,h?'#654f34':'#3d403b');rect(x+1,y+3,25,18,h?'#3e713d':'#35433b');rect(x+8,y,18,16,h?'#4d8248':'#3e4c43')}
- if(ch==='H'){rect(x+2,y+11,28,21,'#c28f62');rect(x,y+8,32,6,'#6d493b');rect(x+7,y+18,7,7,'#ffe29a');rect(x+20,y+18,6,14,'#72513c')}
+ if(ch==='T'){rect(x+12,y+16,7,15,h?'#684a31':'#393c38');rect(x+3,y+7,26,14,h?'#356b3b':'#303c36');rect(x+7,y+2,19,18,h?'#4e884d':'#3d4a41');rect(x+11,y,12,7,h?'#61985b':'#465449');rect(x+5,y+10,4,4,h?'#79ad68':'#566258')}
+ if(ch==='H'){rect(x+1,y+13,30,19,'#c58d5d');rect(x+3,y+15,26,2,'#d8a474');rect(x-1,y+8,34,7,'#684337');rect(x+3,y+5,26,5,'#7b5040');rect(x+7,y+19,8,8,'#f6d17b');rect(x+9,y+21,4,4,'#fff0ad');rect(x+21,y+19,7,13,'#694633');rect(x+22,y+21,2,2,'#d8b26c')}
  if(ch==='B'){rect(x,y+5,T,27,'#474b4a');rect(x+3,y+9,7,6,'#786b52');rect(x+17,y+9,8,6,'#665e50');rect(x+6,y+22,18,10,'#343735')}
  if(ch==='#'){rect(x,y+8,T,18,'#292d2c');rect(x,y+10,T,2,'#74746c');rect(x+3,y+24,8,2,'#161817')}
  if(ch==='z'){rect(x,y,T,T,'#292e2d');rect(x+2,y+3,12,4,'#202322');rect(x+18,y+20,10,3,'#1e2220');rect(x+20,y+5,5,5,'#6b6049')}
@@ -16,7 +16,7 @@ function tile(ch,x,y){
  if(ch==='>'||ch==='<'){rect(x,y,T,T,h?'#d5bd75':'#77705a');g.fillStyle='#292b28';g.font='bold 18px monospace';g.fillText(ch,x+10,y+22)}
 }
 function player(){
- let X=p.x,Y=p.y,b=Math.floor(walk)%2;rect(X-7,Y+5,6,8,'#24282c');rect(X+1,Y+5,6,8,'#24282c');rect(X-9,Y-8,18,17,'#8b3338');rect(X-6,Y-17,12,11,'#d3a47e');rect(X-7,Y-19,14,5,'#332a25');rect(X-8,Y-7,3,9,'#d3a47e');rect(X+5,Y-7,3,9,'#d3a47e');if(b){rect(X-7,Y+9,5,5,'#171a1c');rect(X+2,Y+8,5,5,'#171a1c')}else{rect(X-7,Y+8,5,5,'#171a1c');rect(X+2,Y+9,5,5,'#171a1c')}}
+ let X=p.x,Y=p.y,b=Math.floor(walk)%2;rect(X-8,Y+12,16,4,'#0004');rect(X-7,Y+4,6,9,'#20252b');rect(X+1,Y+4,6,9,'#20252b');rect(X-9,Y-9,18,17,'#7f2f3b');rect(X-7,Y-7,14,3,'#a94b55');rect(X-6,Y-18,12,11,'#d4a27d');rect(X-7,Y-20,14,5,'#332824');rect(X-8,Y-17,3,7,'#332824');rect(X-8,Y-7,3,9,'#d4a27d');rect(X+5,Y-7,3,9,'#d4a27d');rect(X-4,Y-15,2,2,'#27231f');rect(X+2,Y-15,2,2,'#27231f');if(b){rect(X-7,Y+9,5,5,'#171a1c');rect(X+2,Y+8,5,5,'#171a1c')}else{rect(X-7,Y+8,5,5,'#171a1c');rect(X+2,Y+9,5,5,'#171a1c')}}
 function draw(){
  for(let y=0;y<R;y++)for(let x=0;x<C;x++)tile(maps[area][y][x],x*T,y*T);
  if(area==='home'){rect(0,0,W,18,'#efd37f');g.fillStyle='#302d22';g.font='10px monospace';g.fillText('TORPPARINMÄKI — THREAT LEVEL: EI TÄÄLLÄ MITÄÄN TAPAHDU',8,12)}
