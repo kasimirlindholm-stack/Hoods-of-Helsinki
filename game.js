@@ -1,4 +1,4 @@
-const RUNTIME_BUILD=28;
+const RUNTIME_BUILD=29;
 const c=document.querySelector('#game'),g=c.getContext('2d');g.imageSmoothingEnabled=false;
 const W=480,H=320,T=32,C=15,R=10;let area='home',battle=false,last=performance.now(),walk=0,encDist=0,portalLock=0;
 let p={x:7.5*T,y:5.5*T,r:8,hp:30,max:30,lvl:1,xp:0,cash:12,weapon:'Keppi',face:'down'};
@@ -102,12 +102,29 @@ function player(){
  const bw=28,bx=X-bw/2,by=Y-28,ratio=Math.max(0,Math.min(1,p.hp/p.max));rect(bx-1,by-1,bw+2,6,'#111');rect(bx,by,bw,4,'#54282d');rect(bx,by,bw*ratio,4,ratio>.5?'#6fb36b':ratio>.25?'#d0a34f':'#c85858');
 }
 function camera(){if(area==='home')return{x:0,y:0};let mw=maps.malmi[0].length*T,mh=maps.malmi.length*T;return{x:Math.round(Math.max(0,Math.min(mw-W,p.x-W/2))),y:Math.round(Math.max(0,Math.min(mh-H,p.y-H/2)))}}
+function drawMalmiDetails(cam){
+ const X=(tx)=>Math.round(tx*T-cam.x),Y=(ty)=>Math.round(ty*T-cam.y);
+ function car(tx,ty,dir,col){let x=X(tx),y=Y(ty);if(dir==='h'){rect(x+2,y+8,28,15,'#171a1a');rect(x+4,y+6,24,14,col);rect(x+9,y+8,13,6,'#293638');rect(x+5,y+20,6,3,'#111');rect(x+21,y+20,6,3,'#111');rect(x+27,y+10,3,4,'#d9c77a')}else{rect(x+8,y+2,15,28,'#171a1a');rect(x+6,y+4,14,24,col);rect(x+8,y+9,6,13,'#293638');rect(x+20,y+5,3,6,'#111');rect(x+20,y+21,3,6,'#111')}}
+ function bin(tx,ty){let x=X(tx),y=Y(ty);rect(x+8,y+13,16,16,'#222827');rect(x+6,y+10,20,5,'#343b39');rect(x+11,y+16,10,8,'#49524e')}
+ function bench(tx,ty){let x=X(tx),y=Y(ty);rect(x+4,y+15,24,5,'#76543a');rect(x+6,y+11,20,4,'#8b6545');rect(x+7,y+20,3,7,'#242827');rect(x+22,y+20,3,7,'#242827')}
+ function stop(tx,ty){let x=X(tx),y=Y(ty);rect(x+15,y+5,3,27,'#343a39');rect(x+9,y+2,15,11,'#e4e0d0');rect(x+11,y+4,11,7,'#315c87');g.fillStyle='#fff';g.font='bold 6px monospace';g.fillText('HSL',x+12,y+10)}
+ function shop(tx,ty,label){let x=X(tx),y=Y(ty);rect(x,y+7,64,25,'#343938');rect(x+3,y+10,58,8,'#7e3e35');rect(x+5,y+20,18,12,'#1c282a');rect(x+28,y+20,28,12,'#202c2e');g.fillStyle='#e6d69d';g.font='bold 7px monospace';g.fillText(label,x+6,y+16)}
+ // crossroads and zebra crossings
+ [[14,5],[25,10]].forEach(([tx,ty])=>{let x=X(tx),y=Y(ty);for(let i=0;i<5;i++){rect(x+i*7,y+5,4,22,'#c9c9bd');rect(x+5,y+i*7,22,4,'#c9c9bd')}});
+ car(15,7,'h','#596f78');car(26,8,'v','#704b48');car(14,15,'h','#6e6750');car(24,6,'h','#465d50');
+ stop(13,6);stop(27,11);bin(9,11);bin(18,11);bin(26,16);bench(5,10);bench(12,17);
+ shop(17,6,'MALMIN GRILLI');shop(3,17,'KIOSKI');
+ // fence beside neglected park
+ g.strokeStyle='#69706d';g.lineWidth=2;let fy=Y(12);for(let tx=2;tx<9;tx++){let x=X(tx);g.beginPath();g.moveTo(x,fy);g.lineTo(x+T,fy);g.stroke();rect(x+4,fy-7,2,14,'#59605d')}
+ // graffiti on underpass
+ let gx=X(11),gy=Y(12);g.font='bold 9px monospace';g.fillStyle='#a95e73';g.fillText('MALMI',gx+2,gy+19);g.fillStyle='#5f8f8a';g.fillText('HOODS',gx+5,gy+28)
+}
 function draw(){
  // Clear the whole viewport every frame so moving sprites/projectiles never leave trails.
  g.clearRect(0,0,W,H);rect(0,0,W,H,area==='home'?'#719b58':'#3f4543');
  const cam=camera(),map=maps[area],sx=Math.floor(cam.x/T),sy=Math.floor(cam.y/T),ex=Math.min(map[0].length,sx+C+2),ey=Math.min(map.length,sy+R+2);
  for(let y=sy;y<ey;y++)for(let x=sx;x<ex;x++)tile(map[y][x],x*T-cam.x,y*T-cam.y);
- if(area==='home'){stone(38,188);bush(272,40);bush(304,40);flower(220,76);flower(330,92);flower(92,180);lamp(205,224);lamp(365,224);rect(80,238,60,4,'#5f744b');rect(82,234,3,14,'#76563b');rect(106,234,3,14,'#76563b');rect(132,234,3,14,'#76563b')}else{let cam=camera();g.fillStyle='#c5c8c3';g.font='bold 12px monospace';g.fillText('MALMIN ASEMA',4*T-cam.x,2*T-cam.y);g.fillText('PUISTO',3*T-cam.x,7*T-cam.y);g.fillText('ALIKULKU',10*T-cam.x,12*T-cam.y)}
+ if(area==='home'){stone(38,188);bush(272,40);bush(304,40);flower(220,76);flower(330,92);flower(92,180);lamp(205,224);lamp(365,224);rect(80,238,60,4,'#5f744b');rect(82,234,3,14,'#76563b');rect(106,234,3,14,'#76563b');rect(132,234,3,14,'#76563b')}else{drawMalmiDetails(cam);let cam=camera();g.fillStyle='#c5c8c3';g.font='bold 12px monospace';g.fillText('MALMIN ASEMA',4*T-cam.x,2*T-cam.y);g.fillText('PUISTO',3*T-cam.x,7*T-cam.y);g.fillText('ALIKULKU',10*T-cam.x,12*T-cam.y)}
  if(area==='home'){rect(0,0,W,18,'#efd37f');g.fillStyle='#302d22';g.font='10px monospace';g.fillText('TORPPARINMÄKI — THREAT LEVEL: EI TÄÄLLÄ MITÄÄN TAPAHDU',8,12)}
  else{rect(0,0,W,18,'#252928');g.fillStyle='#b8bbb7';g.font='10px monospace';g.fillText('MALMI — THREAT LEVEL: EPÄMÄÄRÄINEN',8,12);g.strokeStyle='#aeb8b833';for(let i=0;i<18;i++){let rx=(i*73+performance.now()/12)%520-20,ry=(i*47+performance.now()/8)%340;g.beginPath();g.moveTo(rx,ry);g.lineTo(rx-5,ry+12);g.stroke()}}
  drawSurvivor();
