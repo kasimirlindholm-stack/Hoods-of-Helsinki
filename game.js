@@ -1,4 +1,4 @@
-const RUNTIME_BUILD=31;
+const RUNTIME_BUILD=32;
 const c=document.querySelector('#game'),g=c.getContext('2d');g.imageSmoothingEnabled=false;
 const W=480,H=320,T=32,C=15,R=10;let area='home',battle=false,last=performance.now(),walk=0,encDist=0,portalLock=0;
 let p={x:7.5*T,y:5.5*T,r:8,hp:30,max:30,lvl:1,xp:0,cash:12,weapon:'Keppi',face:'down'};
@@ -34,12 +34,12 @@ function lamp(x,y){rect(x+15,y+8,3,22,'#3b3b38');rect(x+12,y+6,9,4,'#4b4b46');re
 const urbanSheet=new Image();urbanSheet.src='assets/urban/tilemap_packed.png?v=27';
 // Malmi gets its own dark city renderer. Kenney props can still be layered later,
 // but the street/building structure no longer depends on guessed spritesheet indices.
-function cityNoise(x,y,n=3){
- for(let i=0;i<n;i++){let q=Math.abs(((x/T*37+y/T*71+i*19)*997)%29);rect(x+2+q,y+4+(q*7)%23,2,1,'#59605e')}
+function cityNoise(x,y,gx,gy,n=3){
+ for(let i=0;i<n;i++){let q=Math.abs(((gx*37+gy*71+i*19)*997)%29);rect(Math.round(x+2+q),Math.round(y+4+(q*7)%23),2,1,'#59605e')}
 }
-function urbanTile(ch,x,y){
+function urbanTile(ch,x,y,gx,gy){
  // asphalt base
- rect(x,y,T,T,'#3e4443');cityNoise(x,y,2);
+ rect(x,y,T,T,'#3e4443');cityNoise(x,y,gx,gy,2);
  if(ch==='z'){ // stable neglected park ground; trees are explicit world objects
    rect(x,y,T,T,'#293b32');rect(x,y+25,T,7,'#303634');
  }
@@ -50,7 +50,7 @@ function urbanTile(ch,x,y){
  }
  if(ch==='B'){ // dark apartment/building block
    rect(x,y,T,T,'#202423');rect(x+2,y+2,28,30,'#555a59');rect(x+4,y+4,24,28,'#454a49');
-   const lit=(((x/T)*13+(y/T)*7)|0)%5===0;
+   const lit=((gx*13+gy*7)|0)%5===0;
    rect(x+6,y+8,7,7,lit?'#c6a35f':'#263132');rect(x+19,y+8,7,7,'#273334');
    rect(x+6,y+19,7,7,'#273334');rect(x+19,y+19,7,7,lit?'#b49355':'#252e30');
    rect(x+14,y+19,4,13,'#242827')
@@ -61,7 +61,6 @@ function urbanTile(ch,x,y){
  }
  // Coherent streets: broad asphalt lanes with continuous sidewalks and markings.
  if(ch==='.'){
-   const gx=(x/T)|0,gy=(y/T)|0;
    const vertical=(gx>=14&&gx<=16)||(gx>=25&&gx<=27);
    const horizontal=(gy>=5&&gy<=6)||(gy>=10&&gy<=11);
    if(vertical||horizontal){
@@ -75,8 +74,8 @@ function urbanTile(ch,x,y){
  }
  return true
 }
-function tile(ch,x,y){
- const h=area==='home';if(!h){urbanTile(ch,x,y);return}rect(x,y,T,T,'#719b58');
+function tile(ch,x,y,gx=0,gy=0){
+ const h=area==='home';if(!h){urbanTile(ch,Math.round(x),Math.round(y),gx,gy);return}rect(x,y,T,T,'#719b58');
  for(let i=0;i<4;i++){let q=(x*3+y*7+i*11)%27;px(x+3+q,y+4+(q*5)%23,i%2?'#83aa67':'#628b4d')}
  if(ch==='.'&&h){rect(x,y+12,T,10,'#bda875');rect(x,y+12,T,2,'#d0bd8b');rect(x,y+20,T,2,'#9e8c63');for(let i=0;i<3;i++)rect(x+4+i*11,y+16,6,2,'#d7c797');if(((x+y)/T)%3===0)flower(x+4,y+4)}
  if(ch==='T'){rect(x+12,y+16,7,15,'#684a31');rect(x+3,y+7,26,14,'#356b3b');rect(x+7,y+2,19,18,'#4e884d');rect(x+11,y,12,7,'#61985b');rect(x+5,y+10,4,4,'#79ad68')}
@@ -123,7 +122,7 @@ function draw(){
  // Clear the whole viewport every frame so moving sprites/projectiles never leave trails.
  g.clearRect(0,0,W,H);rect(0,0,W,H,area==='home'?'#719b58':'#3f4543');
  const cam=camera(),map=maps[area],sx=Math.floor(cam.x/T),sy=Math.floor(cam.y/T),ex=Math.min(map[0].length,sx+C+2),ey=Math.min(map.length,sy+R+2);
- for(let y=sy;y<ey;y++)for(let x=sx;x<ex;x++)tile(map[y][x],x*T-cam.x,y*T-cam.y);
+ for(let y=sy;y<ey;y++)for(let x=sx;x<ex;x++)tile(map[y][x],x*T-cam.x,y*T-cam.y,x,y);
  if(area==='home'){stone(38,188);bush(272,40);bush(304,40);flower(220,76);flower(330,92);flower(92,180);lamp(205,224);lamp(365,224);rect(80,238,60,4,'#5f744b');rect(82,234,3,14,'#76563b');rect(106,234,3,14,'#76563b');rect(132,234,3,14,'#76563b')}else{let cam=camera();g.fillStyle='#c5c8c3';g.font='bold 12px monospace';g.fillText('MALMIN ASEMA',4*T-cam.x,2*T-cam.y);g.fillText('PUISTO',3*T-cam.x,7*T-cam.y);g.fillText('ALIKULKU',10*T-cam.x,12*T-cam.y)}
  if(area==='home'){rect(0,0,W,18,'#efd37f');g.fillStyle='#302d22';g.font='10px monospace';g.fillText('TORPPARINMÄKI — THREAT LEVEL: EI TÄÄLLÄ MITÄÄN TAPAHDU',8,12)}
  else{rect(0,0,W,18,'#252928');g.fillStyle='#b8bbb7';g.font='10px monospace';g.fillText('MALMI — THREAT LEVEL: EPÄMÄÄRÄINEN',8,12);g.strokeStyle='#aeb8b833';for(let i=0;i<18;i++){let rx=(i*73+performance.now()/12)%520-20,ry=(i*47+performance.now()/8)%340;g.beginPath();g.moveTo(rx,ry);g.lineTo(rx-5,ry+12);g.stroke()}}
