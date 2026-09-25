@@ -1,7 +1,27 @@
 const c=document.querySelector('#game'),g=c.getContext('2d');g.imageSmoothingEnabled=false;
 const W=480,H=320,T=32,C=15,R=10;let area='home',battle=false,last=performance.now(),walk=0,encDist=0,portalLock=0;
 let p={x:7.5*T,y:5.5*T,r:8,hp:30,max:30,lvl:1,xp:0,cash:12,weapon:'Keppi',face:'down'};
-const maps={home:['TTTTTTTTTTTTTTT','T....TTT......T','T.H..T........T','T....T..H.....T','T.............T','T.............T','T.............T','T..H.......H..T','T..........>>>T','TTTTTTTTTTTTTTT'],malmi:['BBBBBBBBBBBBBBB','B..A....B.....B','B.###...B.zzz.B','B.......B.zzz.B','B..zz.........B','B....... ...A.B'.replace(' ',''),'B......####...B','B.zzz.........B','B.zzz...A..<<<B','BBBBBBBBBBBBBBB']};
+const homeMap=['TTTTTTTTTTTTTTT','T....TTT......T','T.H..T........T','T....T..H.....T','T.............T','T.............T','T.............T','T..H.......H..T','T..........>>>T','TTTTTTTTTTTTTTT'];
+function makeMalmi(){
+ const w=30,h=20,m=Array.from({length:h},()=>Array(w).fill('.'));
+ for(let x=0;x<w;x++){m[0][x]='B';m[h-1][x]='B'}for(let y=0;y<h;y++){m[y][0]='B';m[y][w-1]='B'}
+ // Malmin asema / ratapiha
+ for(let x=3;x<=13;x++){m[3][x]='#';m[4][x]='#'} m[2][7]='A';m[2][11]='A';
+ // kerrostalokortteleita
+ [[18,2,6,4],[3,12,6,5],[20,12,7,5],[18,7,8,3]].forEach(([sx,sy,ww,hh])=>{for(let y=sy;y<sy+hh;y++)for(let x=sx;x<sx+ww;x++)if(y===sy||y===sy+hh-1||x===sx||x===sx+ww-1)m[y][x]='B'});
+ // puisto ja epämääräiset kujat
+ for(let y=7;y<=11;y++)for(let x=3;x<=8;x++)m[y][x]='z';
+ for(let y=6;y<=10;y++)for(let x=11;x<=15;x++)m[y][x]='z';
+ for(let y=13;y<=17;y++)for(let x=11;x<=17;x++)m[y][x]='z';
+ // alikulku
+ for(let x=10;x<=17;x++)m[12][x]='#';m[13][13]='A';
+ // valoja / maamerkkejä
+ [[2,6],[9,6],[16,5],[27,6],[10,16],[18,16],[27,11]].forEach(([x,y])=>m[y][x]='A');
+ // paluu Torpparinmäkeen oikeassa laidassa
+ m[9][27]='<';m[9][28]='<';
+ return m.map(r=>r.join(''));
+}
+const maps={home:homeMap,malmi:makeMalmi()};
 const enemies=[{name:'Pultsari',hp:12,atk:3,xp:5,cash:3,icon:'🥴',line:'“Onks heittää kahta euroa?”'},{name:'Vihainen mummo',hp:16,atk:4,xp:7,cash:5,icon:'👵',line:'“Nuoriso pilalla.”'},{name:'Roadman',hp:21,atk:5,xp:10,cash:8,icon:'🥷',line:'“Bro.”'}];let e=null;
 function rect(x,y,w,h,col){g.fillStyle=col;g.fillRect(Math.round(x),Math.round(y),Math.round(w),Math.round(h))}
 function px(x,y,col){rect(x,y,2,2,col)}
@@ -23,7 +43,7 @@ function tile(ch,x,y){
  if(ch==='>'||ch==='<'){rect(x,y,T,T,h?'#d5bd75':'#77705a');g.fillStyle='#292b28';g.font='bold 18px monospace';g.fillText(ch,x+10,y+22)}
 }
 function player(){
- let X=Math.round(p.x),Y=Math.round(p.y),step=Math.floor(walk)%2,side=p.face==='left'||p.face==='right',flip=p.face==='left'?-1:1;
+ let cam=camera(),X=Math.round(p.x-cam.x),Y=Math.round(p.y-cam.y),step=Math.floor(walk)%2,side=p.face==='left'||p.face==='right',flip=p.face==='left'?-1:1;
  rect(X-9,Y+12,18,4,'#0005');
  let leg=step?2:0;rect(X-7-leg,Y+5,6,8,'#252b32');rect(X+1+leg,Y+5,6,8,'#252b32');
  rect(X-8,Y-8,16,16,'#7d3040');rect(X-6,Y-6,12,3,'#a64b59');rect(X-7,Y+4,14,4,'#51242d');
@@ -34,9 +54,11 @@ function player(){
  else{rect(X-9,Y-6,3,9,'#d4a27d');rect(X+6,Y-6,3,9,'#d4a27d')}
  rect(X-5,Y+12+(step?0:1),5,2,'#111518');rect(X+1,Y+12+(step?1:0),5,2,'#111518')
 }
+function camera(){if(area==='home')return{x:0,y:0};let mw=maps.malmi[0].length*T,mh=maps.malmi.length*T;return{x:Math.max(0,Math.min(mw-W,p.x-W/2)),y:Math.max(0,Math.min(mh-H,p.y-H/2))}}
 function draw(){
- for(let y=0;y<R;y++)for(let x=0;x<C;x++)tile(maps[area][y][x],x*T,y*T);
- if(area==='home'){stone(38,188);bush(272,40);bush(304,40);flower(220,76);flower(330,92);flower(92,180);lamp(205,224);lamp(365,224);rect(80,238,60,4,'#5f744b');rect(82,234,3,14,'#76563b');rect(106,234,3,14,'#76563b');rect(132,234,3,14,'#76563b')}else{rect(60,66,46,3,'#252827');rect(63,69,3,15,'#252827');rect(101,69,3,15,'#252827');lamp(200,32);rect(275,205,18,5,'#232625');rect(278,201,4,4,'#8b7751');rect(287,202,3,3,'#66615a')}
+ const cam=camera(),map=maps[area],sx=Math.floor(cam.x/T),sy=Math.floor(cam.y/T),ex=Math.min(map[0].length,sx+C+2),ey=Math.min(map.length,sy+R+2);
+ for(let y=sy;y<ey;y++)for(let x=sx;x<ex;x++)tile(map[y][x],x*T-cam.x,y*T-cam.y);
+ if(area==='home'){stone(38,188);bush(272,40);bush(304,40);flower(220,76);flower(330,92);flower(92,180);lamp(205,224);lamp(365,224);rect(80,238,60,4,'#5f744b');rect(82,234,3,14,'#76563b');rect(106,234,3,14,'#76563b');rect(132,234,3,14,'#76563b')}else{let cam=camera();g.fillStyle='#c5c8c3';g.font='bold 12px monospace';g.fillText('MALMIN ASEMA',4*T-cam.x,2*T-cam.y);g.fillText('PUISTO',3*T-cam.x,7*T-cam.y);g.fillText('ALIKULKU',10*T-cam.x,12*T-cam.y)}
  if(area==='home'){rect(0,0,W,18,'#efd37f');g.fillStyle='#302d22';g.font='10px monospace';g.fillText('TORPPARINMÄKI — THREAT LEVEL: EI TÄÄLLÄ MITÄÄN TAPAHDU',8,12)}
  else{rect(0,0,W,18,'#252928');g.fillStyle='#b8bbb7';g.font='10px monospace';g.fillText('MALMI — THREAT LEVEL: EPÄMÄÄRÄINEN',8,12);g.strokeStyle='#aeb8b833';for(let i=0;i<18;i++){let rx=(i*73+performance.now()/12)%520-20,ry=(i*47+performance.now()/8)%340;g.beginPath();g.moveTo(rx,ry);g.lineTo(rx-5,ry+12);g.stroke()}}
  player()
@@ -54,7 +76,7 @@ function movement(dt){
  const sp=94*mag,ox=p.x,oy=p.y,nx=p.x+dx*sp*dt,ny=p.y+dy*sp*dt;
  if(!blocked(nx+Math.sign(dx)*p.r,p.y))p.x=nx;if(!blocked(p.x,ny+Math.sign(dy)*p.r))p.y=ny;
  let moved=Math.hypot(p.x-ox,p.y-oy);walk+=moved/8;if(Math.abs(dx)>Math.abs(dy))p.face=dx>0?'right':'left';else p.face=dy>0?'down':'up';
- let ch=cellAt(p.x,p.y);if(portalLock<=0&&area==='home'&&ch==='>'){area='malmi';p.x=11.5*T;p.y=6.5*T;portalLock=1.5;release();msg('MALMI. Sade alkaa melkein välittömästi. Tietenkin.');}
+ let ch=cellAt(p.x,p.y);if(portalLock<=0&&area==='home'&&ch==='>'){area='malmi';p.x=25.5*T;p.y=9.5*T;portalLock=1.5;release();msg('MALMI. Sade alkaa melkein välittömästi. Tutki asemaa, puistoa ja alikulkua.');}
  else if(portalLock<=0&&area==='malmi'&&ch==='<'){area='home';p.x=7.5*T;p.y=5.5*T;p.hp=p.max;portalLock=1.5;release();msg('Takaisin Torpparinmäessä. HP palautui.');}
  if(area==='malmi'&&ch==='z'){encDist+=moved;if(encDist>45){encDist=0;if(Math.random()<.38)startBattle()}}else encDist=0;hud()
 }
