@@ -1,28 +1,34 @@
-const RUNTIME_BUILD=32;
+const RUNTIME_BUILD=33;
 const c=document.querySelector('#game'),g=c.getContext('2d');g.imageSmoothingEnabled=false;
 const W=480,H=320,T=32,C=15,R=10;let area='home',battle=false,last=performance.now(),walk=0,encDist=0,portalLock=0;
 let p={x:7.5*T,y:5.5*T,r:8,hp:30,max:30,lvl:1,xp:0,cash:12,weapon:'Keppi',face:'down'};
 const homeMap=['TTTTTTTTTTTTTTT','T....TTT......T','T.H..T........T','T....T..H.....T','T.............T','T.............T','T.............T','T..H.......H..T','T..........>>>T','TTTTTTTTTTTTTTT'];
 function makeMalmi(){
- const w=30,h=20,m=Array.from({length:h},()=>Array(w).fill('.'));
+ const w=44,h=30,m=Array.from({length:h},()=>Array(w).fill('s'));
+ const fill=(x,y,ww,hh,ch)=>{for(let yy=y;yy<y+hh;yy++)for(let xx=x;xx<x+ww;xx++)if(m[yy]?.[xx]!=null)m[yy][xx]=ch};
+ const frame=(x,y,ww,hh,ch='B')=>{for(let xx=x;xx<x+ww;xx++){m[y][xx]=ch;m[y+hh-1][xx]=ch}for(let yy=y;yy<y+hh;yy++){m[yy][x]=ch;m[yy][x+ww-1]=ch}};
  for(let x=0;x<w;x++){m[0][x]='B';m[h-1][x]='B'}for(let y=0;y<h;y++){m[y][0]='B';m[y][w-1]='B'}
- // Malmin asema / ratapiha
- for(let x=3;x<=13;x++){m[3][x]='#';m[4][x]='#'} m[2][7]='A';m[2][11]='A';
- // kerrostalokortteleita
- [[18,2,6,4],[3,12,6,5],[20,12,7,5],[18,7,8,3]].forEach(([sx,sy,ww,hh])=>{for(let y=sy;y<sy+hh;y++)for(let x=sx;x<sx+ww;x++)if(y===sy||y===sy+hh-1||x===sx||x===sx+ww-1)m[y][x]='B'});
- // puisto ja epämääräiset kujat
- for(let y=7;y<=11;y++)for(let x=3;x<=8;x++)m[y][x]='z';
- for(let y=6;y<=10;y++)for(let x=11;x<=15;x++)m[y][x]='z';
- for(let y=13;y<=17;y++)for(let x=11;x<=17;x++)m[y][x]='z';
- // alikulku
- for(let x=10;x<=17;x++)m[12][x]='#';m[13][13]='A';
- // valoja / maamerkkejä
- [[2,6],[9,6],[16,5],[27,6],[10,16],[18,16],[27,11]].forEach(([x,y])=>m[y][x]='A');
- // paluu Torpparinmäkeen oikeassa laidassa
- m[9][27]='<';m[9][28]='<';
+ // YLÄ-MALMI: tori / Malmin raitti / pienet liiketalot
+ fill(2,4,17,2,'r'); fill(8,2,2,13,'r'); fill(2,10,17,2,'r');
+ frame(2,2,5,3,'B'); frame(11,2,7,3,'B'); frame(2,13,7,5,'B'); frame(11,13,8,5,'B');
+ fill(3,7,4,2,'t'); // Ylä-Malmin tori
+ fill(12,7,4,2,'P'); // King Pizza -tyyppinen pizzeria
+ fill(3,20,6,5,'z'); fill(11,20,8,5,'z');
+ // MALMIN ASEMA + ratakäytävä erottaa alueet
+ fill(20,1,4,28,'#'); fill(19,8,1,5,'='); fill(24,8,1,5,'=');
+ // ALA-MALMI: Nova / market / pysäköinti / kävelykatu
+ fill(25,4,17,2,'r'); fill(28,2,2,15,'r'); fill(25,15,17,2,'r'); fill(36,2,2,15,'r');
+ frame(25,2,8,6,'N'); // Nova-tyyppinen kauppakeskus
+ frame(34,2,8,7,'M'); // suuri market
+ fill(34,10,8,4,'p'); // parkkialue
+ frame(25,18,7,6,'B'); frame(34,18,8,7,'B');
+ fill(26,26,7,2,'z'); fill(35,26,6,2,'z');
+ // portit
+ m[10][2]='<'; m[10][1]='<';
  return m.map(r=>r.join(''));
 }
 const maps={home:homeMap,malmi:makeMalmi()};
+function malmiZone(){return area==='malmi'&&p.x>=24*T?'ala':'yla'}
 const enemies=[{name:'Pultsari',hp:12,atk:3,xp:5,cash:3,icon:'🥴',line:'“Onks heittää kahta euroa?”'},{name:'Vihainen mummo',hp:16,atk:4,xp:7,cash:5,icon:'👵',line:'“Nuoriso pilalla.”'},{name:'Roadman',hp:21,atk:5,xp:10,cash:8,icon:'🥷',line:'“Bro.”'}];let e=null;
 function rect(x,y,w,h,col){g.fillStyle=col;g.fillRect(Math.round(x),Math.round(y),Math.round(w),Math.round(h))}
 function px(x,y,col){rect(x,y,2,2,col)}
@@ -130,7 +136,7 @@ function draw(){
  // Player render is protected: optional effects/mobs cannot prevent the character from drawing.
 }
 function cellAt(x,y){let cx=Math.floor(x/T),cy=Math.floor(y/T);return maps[area][cy]?.[cx]||'B'}
-function blocked(x,y){return 'TBH'.includes(cellAt(x,y))}
+function blocked(x,y){return 'TBHNM'.includes(cellAt(x,y))}
 function playerBlocked(x,y){let r=6;return blocked(x-r,y-r)||blocked(x+r,y-r)||blocked(x-r,y+r)||blocked(x+r,y+r)}
 function nudgeToFree(){if(!playerBlocked(p.x,p.y))return;for(let rad=8;rad<=T*3;rad+=8)for(let a=0;a<Math.PI*2;a+=Math.PI/8){let x=p.x+Math.cos(a)*rad,y=p.y+Math.sin(a)*rad;if(!playerBlocked(x,y)){p.x=x;p.y=y;return}}}
 let joy={x:0,y:0,active:false,id:null};const j=document.querySelector('#joy'),s=document.querySelector('#stick');
@@ -151,7 +157,7 @@ function movement(dt){
  const sp=94*mag,ox=p.x,oy=p.y,nx=p.x+dx*sp*dt,ny=p.y+dy*sp*dt;
  nudgeToFree();if(!playerBlocked(nx,p.y))p.x=nx;if(!playerBlocked(p.x,ny))p.y=ny;
  let moved=Math.hypot(p.x-ox,p.y-oy);walk+=moved/8;if(Math.abs(dx)>Math.abs(dy))p.face=dx>0?'right':'left';else p.face=dy>0?'down':'up';
- let ch=cellAt(p.x,p.y);if(portalLock<=0&&area==='home'&&ch==='>'){area='malmi';p.x=26.5*T;p.y=10.5*T;portalLock=1.5;release();msg('MALMI. Sade alkaa melkein välittömästi. Tutki asemaa, puistoa ja alikulkua.');}
+ let ch=cellAt(p.x,p.y);if(portalLock<=0&&area==='home'&&ch==='>'){area='malmi';p.x=4.5*T;p.y=10.5*T;portalLock=1.5;release();msg('MALMI. Sade alkaa melkein välittömästi. Tutki asemaa, puistoa ja alikulkua.');}
  else if(portalLock<=0&&area==='malmi'&&ch==='<'){area='home';p.x=7.5*T;p.y=5.5*T;p.hp=p.max;portalLock=1.5;release();msg('Takaisin Torpparinmäessä. HP palautui.');}
  hud()
 }
@@ -169,13 +175,13 @@ const lootTable=[
  {name:'Mystinen kultakorkki',chance:.000001,col:'#f5df72',kind:'legendary'}
 ];
 function addBag(name){bag[name]=(bag[name]||0)+1}
-function safeSpot(x,y){return !'TBH#'.includes(cellAt(x,y))}
+function safeSpot(x,y){return !'TBH#NM'.includes(cellAt(x,y))}
 function spawnMob(){
  if(area!=='malmi'||mobs.length>45)return;
  let a=Math.random()*Math.PI*2,d=250+Math.random()*100,x=p.x+Math.cos(a)*d,y=p.y+Math.sin(a)*d;
  x=Math.max(T,Math.min(maps.malmi[0].length*T-T,x));y=Math.max(T,Math.min(maps.malmi.length*T-T,y));
  if(!safeSpot(x,y))return;
- let roll=Math.random(),type=roll<.58?{name:'Pultsari',hp:15,sp:35,dmg:4,col:'#9b765c',xp:2}:roll<.88?{name:'Roadman',hp:24,sp:48,dmg:6,col:'#45445c',xp:4}:{name:'Vihainen mummo',hp:34,sp:27,dmg:8,col:'#79566e',xp:6};
+ let roll=Math.random(),hard=malmiZone()==='ala',type=roll<.58?{name:'Pultsari',hp:hard?24:15,sp:hard?42:35,dmg:hard?6:4,col:'#9b765c',xp:hard?4:2}:roll<.88?{name:'Roadman',hp:hard?38:24,sp:hard?56:48,dmg:hard?9:6,col:'#45445c',xp:hard?7:4}:{name:'Vihainen mummo',hp:hard?52:34,sp:hard?34:27,dmg:hard?12:8,col:'#79566e',xp:hard?10:6};
  mobs.push({...type,x,y,max:type.hp,r:10});
 }
 function fireKoff(){
