@@ -1,4 +1,5 @@
-const RUNTIME_BUILD=22;\nconst c=document.querySelector('#game'),g=c.getContext('2d');g.imageSmoothingEnabled=false;
+const RUNTIME_BUILD=23;
+const c=document.querySelector('#game'),g=c.getContext('2d');g.imageSmoothingEnabled=false;
 const W=480,H=320,T=32,C=15,R=10;let area='home',battle=false,last=performance.now(),walk=0,encDist=0,portalLock=0;
 let p={x:7.5*T,y:5.5*T,r:8,hp:30,max:30,lvl:1,xp:0,cash:12,weapon:'Keppi',face:'down'};
 const homeMap=['TTTTTTTTTTTTTTT','T....TTT......T','T.H..T........T','T....T..H.....T','T.............T','T.............T','T.............T','T..H.......H..T','T..........>>>T','TTTTTTTTTTTTTTT'];
