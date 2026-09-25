@@ -1,4 +1,4 @@
-const c=document.querySelector('#game'),g=c.getContext('2d');g.imageSmoothingEnabled=false;
+const RUNTIME_BUILD=22;\nconst c=document.querySelector('#game'),g=c.getContext('2d');g.imageSmoothingEnabled=false;
 const W=480,H=320,T=32,C=15,R=10;let area='home',battle=false,last=performance.now(),walk=0,encDist=0,portalLock=0;
 let p={x:7.5*T,y:5.5*T,r:8,hp:30,max:30,lvl:1,xp:0,cash:12,weapon:'Keppi',face:'down'};
 const homeMap=['TTTTTTTTTTTTTTT','T....TTT......T','T.H..T........T','T....T..H.....T','T.............T','T.............T','T.............T','T..H.......H..T','T..........>>>T','TTTTTTTTTTTTTTT'];
@@ -167,3 +167,5 @@ attack.onclick=()=>{if(!battle)return;let dmg=4+Math.floor(Math.random()*5)+p.lv
 talk.onclick=()=>{if(Math.random()<.3){msg(e.name+' päätti jättää asian sikseen.');endBattle()}else battleLog.textContent=e.name+': “Ei kiinnosta.”'};run.onclick=()=>{if(Math.random()<.65){msg('Poistuit tilanteesta ripeällä kävelyllä.');endBattle()}else battleLog.textContent='Et päässyt karkuun. Kiusaannuttavaa.'};
 act.onclick=()=>{if(area==='malmi'){bagOpen=!bagOpen;release();msg(bagOpen?'BAG avattu.':'BAG suljettu. Liiku ja väistele!')}else msg('Torpparinmäki on epäilyttävän idyllinen. Malmi odottaa idässä →')};
 function loop(t){let dt=Math.min(.033,(t-last)/1000);last=t;movement(dt);survivor(dt);draw();requestAnimationFrame(loop)}hud();requestAnimationFrame(loop);
+// Runtime build marker: JS is authoritative even if an old HTML shell was cached.
+const buildTag=document.querySelector('h1 small');if(buildTag)buildTag.textContent='BUILD '+RUNTIME_BUILD;
