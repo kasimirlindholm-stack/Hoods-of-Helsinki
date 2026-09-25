@@ -1,0 +1,26 @@
+name: Browser game test
+on:
+  push:
+    branches: [main]
+    paths:
+      - 'game.js'
+      - 'index.html'
+      - 'style.css'
+      - 'tests/**'
+      - '.github/workflows/browser-test.yml'
+  workflow_dispatch:
+jobs:
+  browser-test:
+    runs-on: ubuntu-latest
+    timeout-minutes: 10
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-node@v4
+        with:
+          node-version: 20
+      - run: npm install --no-save @playwright/test
+      - run: npx playwright install --with-deps chromium
+      - name: Start local game server
+        run: python3 -m http.server 4173 > /tmp/hoods-server.log 2>&1 &
+      - name: Run real Chromium smoke test
+        run: npx playwright test tests/game.spec.js --reporter=line
