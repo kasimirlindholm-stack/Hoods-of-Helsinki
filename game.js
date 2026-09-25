@@ -1,48 +1,49 @@
-const c=document.querySelector('#game'),x=c.getContext('2d');x.imageSmoothingEnabled=false;
-const S=32,C=15,R=10;
-let p={x:7,y:5,hp:30,max:30,lvl:1,xp:0,cash:12,weapon:'Keppi'}, area='home',battle=false;
-const maps={
-home:[
-'TTTTTTTTTTTTTTT','T....TTT......T','T.H..T........T','T....T..H.....T','T.............T','T......P......T','T.............T','T..H.......H..T','T..........>>>T','TTTTTTTTTTTTTTT'],
-malmi:[
-'BBBBBBBBBBBBBBB','B..A....B.....B','B.###...B.zzz.B','B.......B.zzz.B','B..zz.........B','B..zz..P...A..B','B......####...B','B.zzz.........B','B.zzz...A..<<<B','BBBBBBBBBBBBBBB']};
-const enemies=[
-{name:'Pultsari',hp:12,atk:3,xp:5,cash:3,icon:'🥴',line:'“Onks heittää kahta euroa?”'},
-{name:'Vihainen mummo',hp:16,atk:4,xp:7,cash:5,icon:'👵',line:'“Nuoriso pilalla.”'},
-{name:'Roadman',hp:21,atk:5,xp:10,cash:8,icon:'🥷',line:'“Bro.”'}];
-let e=null;
-function tile(ch,px,py){
- const home=area==='home'; x.fillStyle=home?'#638257':'#3b4140';x.fillRect(px,py,S,S);
- if(ch==='T'){x.fillStyle=home?'#315c37':'#202b27';x.fillRect(px,py,S,S);x.fillStyle=home?'#477a43':'#293831';x.fillRect(px+6,py+2,20,25)}
- if(ch==='B'||ch==='H'){x.fillStyle=home?'#bd9868':'#4b4e4d';x.fillRect(px+2,py+4,28,28);x.fillStyle=home?'#ffe08a':'#8b7358';x.fillRect(px+8,py+12,7,7);x.fillRect(px+19,py+12,7,7)}
- if(ch==='#'){x.fillStyle='#252827';x.fillRect(px,py+9,S,14);x.fillStyle='#65615b';x.fillRect(px,py+10,S,2)}
- if(ch==='z'){x.fillStyle='#252928';x.fillRect(px,py,S,S);x.fillStyle='#151817';for(let i=0;i<4;i++)x.fillRect(px+4+i*7,py+6+(i%2)*12,4,4)}
- if(ch==='A'){x.fillStyle='#555';x.fillRect(px+8,py+5,17,27);x.fillStyle='#c6a84a';x.fillRect(px+12,py+10,9,4)}
- if(ch==='>'||ch==='<'){x.fillStyle=home?'#d5bd75':'#736c50';x.fillRect(px,py,S,S);x.fillStyle='#222';x.font='18px monospace';x.fillText(ch,px+10,py+22)}
+const c=document.querySelector('#game'),g=c.getContext('2d');g.imageSmoothingEnabled=false;
+const W=480,H=320,T=32,C=15,R=10;let area='home',battle=false,last=performance.now(),walk=0,encDist=0;
+let p={x:7.5*T,y:5.5*T,r:8,hp:30,max:30,lvl:1,xp:0,cash:12,weapon:'Keppi',face:'down'};
+const maps={home:['TTTTTTTTTTTTTTT','T....TTT......T','T.H..T........T','T....T..H.....T','T.............T','T.............T','T.............T','T..H.......H..T','T..........>>>T','TTTTTTTTTTTTTTT'],malmi:['BBBBBBBBBBBBBBB','B..A....B.....B','B.###...B.zzz.B','B.......B.zzz.B','B..zz.........B','B....... ...A.B'.replace(' ',''),'B......####...B','B.zzz.........B','B.zzz...A..<<<B','BBBBBBBBBBBBBBB']};
+const enemies=[{name:'Pultsari',hp:12,atk:3,xp:5,cash:3,icon:'🥴',line:'“Onks heittää kahta euroa?”'},{name:'Vihainen mummo',hp:16,atk:4,xp:7,cash:5,icon:'👵',line:'“Nuoriso pilalla.”'},{name:'Roadman',hp:21,atk:5,xp:10,cash:8,icon:'🥷',line:'“Bro.”'}];let e=null;
+function rect(x,y,w,h,col){g.fillStyle=col;g.fillRect(x,y,w,h)}
+function tile(ch,x,y){
+ const h=area==='home';rect(x,y,T,T,h?'#79a15f':'#515958');
+ if(ch==='.'&&h){rect(x,y+14,T,8,'#b9a777');rect(x+2,y+16,T-4,4,'#c9ba8b')}
+ if(ch==='T'){rect(x+4,y+13,6,16,h?'#654f34':'#3d403b');rect(x+1,y+3,25,18,h?'#3e713d':'#35433b');rect(x+8,y,18,16,h?'#4d8248':'#3e4c43')}
+ if(ch==='H'){rect(x+2,y+11,28,21,'#c28f62');rect(x,y+8,32,6,'#6d493b');rect(x+7,y+18,7,7,'#ffe29a');rect(x+20,y+18,6,14,'#72513c')}
+ if(ch==='B'){rect(x,y+5,T,27,'#474b4a');rect(x+3,y+9,7,6,'#786b52');rect(x+17,y+9,8,6,'#665e50');rect(x+6,y+22,18,10,'#343735')}
+ if(ch==='#'){rect(x,y+8,T,18,'#292d2c');rect(x,y+10,T,2,'#74746c');rect(x+3,y+24,8,2,'#161817')}
+ if(ch==='z'){rect(x,y,T,T,'#292e2d');rect(x+2,y+3,12,4,'#202322');rect(x+18,y+20,10,3,'#1e2220');rect(x+20,y+5,5,5,'#6b6049')}
+ if(ch==='A'){rect(x+8,y+5,17,27,'#626462');rect(x+11,y+8,11,5,'#c2a14d');rect(x+12,y+19,9,3,'#333')}
+ if(ch==='>'||ch==='<'){rect(x,y,T,T,h?'#d5bd75':'#77705a');g.fillStyle='#292b28';g.font='bold 18px monospace';g.fillText(ch,x+10,y+22)}
 }
+function player(){
+ let X=p.x,Y=p.y,b=Math.floor(walk)%2;rect(X-7,Y+5,6,8,'#24282c');rect(X+1,Y+5,6,8,'#24282c');rect(X-9,Y-8,18,17,'#8b3338');rect(X-6,Y-17,12,11,'#d3a47e');rect(X-7,Y-19,14,5,'#332a25');rect(X-8,Y-7,3,9,'#d3a47e');rect(X+5,Y-7,3,9,'#d3a47e');if(b){rect(X-7,Y+9,5,5,'#171a1c');rect(X+2,Y+8,5,5,'#171a1c')}else{rect(X-7,Y+8,5,5,'#171a1c');rect(X+2,Y+9,5,5,'#171a1c')}}
 function draw(){
- const m=maps[area];for(let y=0;y<R;y++)for(let q=0;q<C;q++)tile(m[y][q],q*S,y*S);
- if(area==='home'){x.fillStyle='#f0ce78';x.fillRect(0,0,480,18);x.fillStyle='#27251e';x.font='10px monospace';x.fillText('TORPPARINMÄKI — THREAT LEVEL: EI TÄÄLLÄ MITÄÄN TAPAHDU',8,12)}
- else{x.fillStyle='#252525';x.fillRect(0,0,480,18);x.fillStyle='#aaa';x.font='10px monospace';x.fillText('MALMI — THREAT LEVEL: EPÄMÄÄRÄINEN',8,12)}
- x.fillStyle='#20252a';x.fillRect(p.x*S+8,p.y*S+8,16,21);x.fillStyle='#d9b18b';x.fillRect(p.x*S+10,p.y*S+3,12,10);x.fillStyle='#8a3131';x.fillRect(p.x*S+8,p.y*S+18,16,5)
+ for(let y=0;y<R;y++)for(let x=0;x<C;x++)tile(maps[area][y][x],x*T,y*T);
+ if(area==='home'){rect(0,0,W,18,'#efd37f');g.fillStyle='#302d22';g.font='10px monospace';g.fillText('TORPPARINMÄKI — THREAT LEVEL: EI TÄÄLLÄ MITÄÄN TAPAHDU',8,12)}
+ else{rect(0,0,W,18,'#252928');g.fillStyle='#b8bbb7';g.font='10px monospace';g.fillText('MALMI — THREAT LEVEL: EPÄMÄÄRÄINEN',8,12);g.strokeStyle='#aeb8b833';for(let i=0;i<18;i++){let rx=(i*73+performance.now()/12)%520-20,ry=(i*47+performance.now()/8)%340;g.beginPath();g.moveTo(rx,ry);g.lineTo(rx-5,ry+12);g.stroke()}}
+ player()
 }
-function msg(t){document.querySelector('#message').textContent=t}
-function hud(){place.textContent=area==='home'?'TORPPARINMÄKI':'MALMI';hp.textContent=p.hp;lvl.textContent=p.lvl;cash.textContent=p.cash}
-function move(dx,dy){
- if(battle)return;let nx=p.x+dx,ny=p.y+dy,m=maps[area];if(nx<0||ny<0||nx>=C||ny>=R)return;
- let ch=m[ny][nx];if('TBH'.includes(ch))return;p.x=nx;p.y=ny;
- if(area==='home'&&ch==='>'){area='malmi';p.x=13;p.y=8;msg('MALMI. Jokin täällä haisee palaneelta sähköpotkulaudalta.');}
- else if(area==='malmi'&&ch==='<'){area='home';p.x=12;p.y=8;p.hp=p.max;msg('Takaisin Torpparinmäessä. HP palautui. Linnut laulavat epäilyttävän iloisesti.');}
- else if(area==='malmi'&&ch==='z'&&Math.random()<.28)startBattle();
- else if(ch==='A')msg('Automaatti näyttää toimivan. Se on jo Malmilla hyvä merkki.');
- draw();hud()
+function cellAt(x,y){let cx=Math.floor(x/T),cy=Math.floor(y/T);return maps[area][cy]?.[cx]||'B'}
+function blocked(x,y){return 'TBH'.includes(cellAt(x,y))}
+let joy={x:0,y:0,active:false,id:null};const j=document.querySelector('#joy'),s=document.querySelector('#stick');
+function setJoy(ev){let r=j.getBoundingClientRect(),dx=ev.clientX-(r.left+r.width/2),dy=ev.clientY-(r.top+r.height/2),d=Math.hypot(dx,dy),m=40;if(d>m){dx*=m/d;dy*=m/d}joy.x=dx/m;joy.y=dy/m;s.style.transform='translate('+dx+'px,'+dy+'px)'}
+j.addEventListener('pointerdown',ev=>{joy.active=true;joy.id=ev.pointerId;j.setPointerCapture(ev.pointerId);setJoy(ev)});
+j.addEventListener('pointermove',ev=>{if(joy.active&&ev.pointerId===joy.id)setJoy(ev)});
+function release(){joy.active=false;joy.x=joy.y=0;s.style.transform='translate(0,0)'}j.addEventListener('pointerup',release);j.addEventListener('pointercancel',release);
+let keys={};addEventListener('keydown',e=>keys[e.key]=1);addEventListener('keyup',e=>keys[e.key]=0);
+function movement(dt){
+ if(battle)return;let dx=joy.x+(keys.ArrowRight?1:0)-(keys.ArrowLeft?1:0),dy=joy.y+(keys.ArrowDown?1:0)-(keys.ArrowUp?1:0),mag=Math.hypot(dx,dy);if(mag<.08)return;if(mag>1){dx/=mag;dy/=mag;mag=1}
+ const sp=94*mag,ox=p.x,oy=p.y,nx=p.x+dx*sp*dt,ny=p.y+dy*sp*dt;
+ if(!blocked(nx+Math.sign(dx)*p.r,p.y))p.x=nx;if(!blocked(p.x,ny+Math.sign(dy)*p.r))p.y=ny;
+ let moved=Math.hypot(p.x-ox,p.y-oy);walk+=moved/8;if(Math.abs(dx)>Math.abs(dy))p.face=dx>0?'right':'left';else p.face=dy>0?'down':'up';
+ let ch=cellAt(p.x,p.y);if(area==='home'&&ch==='>'){area='malmi';p.x=13.3*T;p.y=8.5*T;msg('MALMI. Sade alkaa melkein välittömästi. Tietenkin.');}
+ else if(area==='malmi'&&ch==='<'){area='home';p.x=11.7*T;p.y=8.5*T;p.hp=p.max;msg('Takaisin Torpparinmäessä. HP palautui.');}
+ if(area==='malmi'&&ch==='z'){encDist+=moved;if(encDist>45){encDist=0;if(Math.random()<.38)startBattle()}}else encDist=0;hud()
 }
-function startBattle(){battle=true;e={...enemies[Math.floor(Math.random()*enemies.length)]};enemyName.textContent=e.name;enemyArt.textContent=e.icon;enemyHp.textContent=e.hp;battleLog.textContent=e.line;document.querySelector('#battle').classList.remove('hidden')}
-function endBattle(){battle=false;document.querySelector('#battle').classList.add('hidden');draw();hud()}
-attack.onclick=()=>{if(!battle)return;let dmg=4+Math.floor(Math.random()*5)+p.lvl;e.hp-=dmg;if(e.hp<=0){p.cash+=e.cash;p.xp+=e.xp;msg(e.name+' kaatui. +'+e.xp+' XP, +'+e.cash+' €');if(p.xp>=p.lvl*12){p.xp=0;p.lvl++;p.max+=5;p.hp=p.max;msg('LEVEL UP! Olet nyt tasolla '+p.lvl+'.')}endBattle();return}p.hp-=Math.max(1,e.atk-Math.floor(p.lvl/2));enemyHp.textContent=e.hp;hp.textContent=p.hp;battleLog.textContent='Osuit '+dmg+'. '+e.name+' vastasi. HP: '+p.hp;if(p.hp<=0){p.hp=p.max;area='home';p.x=7;p.y=5;p.cash=Math.max(0,p.cash-5);msg('Heräsit Torpparinmäessä. Joku oli vienyt 5 €.');endBattle()}};
-talk.onclick=()=>{if(Math.random()<.3){msg(e.name+' päätti, ettei tämä ollutkaan sen arvoista.');endBattle()}else battleLog.textContent=e.name+': “Ei kiinnosta.”'};
-run.onclick=()=>{if(Math.random()<.65){msg('Poistuit tilanteesta ripeällä kävelyllä.');endBattle()}else battleLog.textContent='Et päässyt karkuun. Kiusaannuttavaa.'};
-document.addEventListener('keydown',ev=>{const d={ArrowUp:[0,-1],ArrowDown:[0,1],ArrowLeft:[-1,0],ArrowRight:[1,0]}[ev.key];if(d){ev.preventDefault();move(...d)}});
-document.querySelectorAll('[data-k]').forEach(b=>b.addEventListener('pointerdown',()=>{let d={ArrowUp:[0,-1],ArrowDown:[0,1],ArrowLeft:[-1,0],ArrowRight:[1,0]}[b.dataset.k];move(...d)}));
-act.onclick=()=>msg(area==='home'?'Torpparinmäki tuntuu turvalliselta. Malmi odottaa idässä →':'Tutki kujia. Tummilla ruuduilla voi tulla encounter.');
-draw();hud();
+function msg(t){document.querySelector('#message').textContent=t}function hud(){place.textContent=area==='home'?'TORPPARINMÄKI':'MALMI';hp.textContent=p.hp;lvl.textContent=p.lvl;cash.textContent=p.cash}
+function startBattle(){battle=true;release();e={...enemies[Math.floor(Math.random()*enemies.length)]};enemyName.textContent=e.name;enemyArt.textContent=e.icon;enemyHp.textContent=e.hp;battleLog.textContent=e.line;document.querySelector('#battle').classList.remove('hidden')}
+function endBattle(){battle=false;document.querySelector('#battle').classList.add('hidden');hud()}
+attack.onclick=()=>{if(!battle)return;let dmg=4+Math.floor(Math.random()*5)+p.lvl;e.hp-=dmg;if(e.hp<=0){p.cash+=e.cash;p.xp+=e.xp;msg(e.name+' kaatui. +'+e.xp+' XP, +'+e.cash+' €');if(p.xp>=p.lvl*12){p.xp=0;p.lvl++;p.max+=5;p.hp=p.max;msg('LEVEL UP! Taso '+p.lvl+'.')}endBattle();return}p.hp-=Math.max(1,e.atk-Math.floor(p.lvl/2));enemyHp.textContent=e.hp;hp.textContent=p.hp;battleLog.textContent='Osuit '+dmg+'. Vastaisku. HP: '+p.hp;if(p.hp<=0){p.hp=p.max;area='home';p.x=7.5*T;p.y=5.5*T;p.cash=Math.max(0,p.cash-5);msg('Heräsit Torpparinmäessä. Joku oli vienyt 5 €.');endBattle()}};
+talk.onclick=()=>{if(Math.random()<.3){msg(e.name+' päätti jättää asian sikseen.');endBattle()}else battleLog.textContent=e.name+': “Ei kiinnosta.”'};run.onclick=()=>{if(Math.random()<.65){msg('Poistuit tilanteesta ripeällä kävelyllä.');endBattle()}else battleLog.textContent='Et päässyt karkuun. Kiusaannuttavaa.'};
+act.onclick=()=>msg(area==='home'?'Torpparinmäki on epäilyttävän idyllinen. Malmi odottaa idässä →':'Kujilla kannattaa pitää silmät auki.');
+function loop(t){let dt=Math.min(.033,(t-last)/1000);last=t;movement(dt);draw();requestAnimationFrame(loop)}hud();requestAnimationFrame(loop);
