@@ -1,4 +1,22 @@
-*{box-sizing:border-box;touch-action:none}body{margin:0;background:#090b0a;color:#eee;font-family:monospace;display:flex;justify-content:center;min-height:100vh;overflow:hidden}main{width:min(100%,620px);padding:6px}h1{text-align:center;font-size:21px;letter-spacing:3px;margin:3px 0 6px;color:#eadca6;text-shadow:2px 2px #222}#hud{display:flex;justify-content:space-between;background:#171a18;border:2px solid #67645a;padding:6px;font-size:11px}canvas{width:100%;max-height:58vh;aspect-ratio:3/2;image-rendering:pixelated;border:4px solid #b6a66f;outline:3px solid #252a27;background:#111;box-shadow:0 5px 18px #0008;display:block}#message{min-height:47px;background:#f2e6bd;color:#20231f;border:5px double #4b493e;padding:7px;font-weight:bold;font-size:12px}.mobile-ui{height:135px;position:relative}.mobile-ui #joy{position:absolute;left:18px;bottom:7px;width:116px;height:116px;border-radius:50%;background:#29302caa;border:3px solid #606a63;box-shadow:inset 0 0 20px #0008}.mobile-ui #joy:after{content:"";position:absolute;inset:24px;border-radius:50%;border:1px solid #69736c55}.mobile-ui #stick{position:absolute;width:52px;height:52px;left:29px;top:29px;border-radius:50%;background:#69736c;border:3px solid #929b94;box-shadow:0 5px 9px #0008}.mobile-ui #act{position:absolute;right:28px;bottom:27px;width:72px;height:72px;border:0;border-radius:50%;background:#7e3038;color:white;font:bold 26px monospace;box-shadow:0 5px #351318}.hidden{display:none!important}#battle{position:fixed;inset:0;background:#101311e8;display:flex;align-items:center;justify-content:center;padding:20px;z-index:10}.panel{width:min(440px,100%);background:#d9d0ad;color:#20211e;border:6px double #393a34;padding:16px}.panel h2{text-transform:uppercase}.actions{display:flex;gap:7px;flex-wrap:wrap}.actions button{flex:1;padding:12px;font-family:inherit;font-weight:bold}#enemyArt{font-size:54px;text-align:center}.rain{pointer-events:none}@media(min-width:700px){.mobile-ui{opacity:.7}}
-#hud{background:linear-gradient(#202622,#121613);border-color:#a99968;color:#eee7cc}#place{color:#f0d98e}.panel{box-shadow:0 10px 35px #000b}.actions button{border:2px solid #45463e;background:#f2e6bd;box-shadow:inset 0 -3px #c2b78f}.actions button:active{transform:translateY(2px)}
-\nh1 small{font-size:8px;letter-spacing:1px;color:#83c98a;vertical-align:middle}
-#installApp{width:100%;padding:11px;margin:5px 0;background:#d9bd69;color:#1b201c;border:3px solid #51492f;font:bold 14px monospace;letter-spacing:1px;box-shadow:inset 0 -3px #a48b45}#installApp:active{transform:translateY(2px)}
+*{box-sizing:border-box;touch-action:none}
+html,body{margin:0;width:100%;height:100%;overflow:hidden;background:#070909;color:#eee;font-family:monospace}
+body{display:flex;justify-content:center}
+main{position:relative;width:min(100vw,620px);height:100dvh;padding:0;background:#090b0a;overflow:hidden}
+header{position:absolute;z-index:5;top:max(5px,env(safe-area-inset-top));left:8px;right:8px;pointer-events:none}
+h1{text-align:center;font-size:18px;letter-spacing:3px;margin:0 0 4px;color:#eadca6;text-shadow:2px 2px #111}
+h1 small{font-size:8px;letter-spacing:1px;color:#83c98a;vertical-align:middle}
+#hud{display:flex;justify-content:space-between;background:#101512dc;border:1px solid #7d765c;padding:5px 7px;font-size:11px;backdrop-filter:blur(3px)}
+#place{color:#f0d98e}
+canvas{position:absolute;inset:0;width:100%;height:100%;image-rendering:pixelated;background:#111;display:block}
+#message{position:absolute;z-index:5;left:10px;right:10px;bottom:142px;min-height:36px;background:#151a17dc;color:#eee7cc;border:1px solid #80775c;padding:7px 9px;font-weight:bold;font-size:11px;backdrop-filter:blur(3px)}
+.mobile-ui{position:absolute;z-index:6;inset:0;pointer-events:none}
+.mobile-ui #joy{pointer-events:auto;position:absolute;left:30px;bottom:max(28px,env(safe-area-inset-bottom));width:128px;height:128px;border-radius:50%;background:#17201c99;border:3px solid #78837b99;box-shadow:inset 0 0 28px #000b,0 4px 18px #0008}
+.mobile-ui #joy:after{content:"";position:absolute;inset:27px;border-radius:50%;border:2px solid #7d888080}
+.mobile-ui #stick{position:absolute;width:56px;height:56px;left:33px;top:33px;border-radius:50%;background:#7a847e;border:3px solid #a3aaa5;box-shadow:0 5px 10px #000b}
+.mobile-ui #act{pointer-events:auto;position:absolute;right:46px;bottom:max(52px,env(safe-area-inset-bottom));width:82px;height:82px;border:2px solid #b45861;border-radius:50%;background:#842f39dd;color:white;font:bold 27px monospace;box-shadow:0 7px #351318,0 4px 18px #0008}
+#installApp{position:absolute;z-index:9;top:75px;left:10px;right:10px;padding:10px;background:#d9bd69;color:#1b201c;border:2px solid #51492f;font:bold 13px monospace}
+.hidden{display:none!important}
+#battle{position:fixed;inset:0;background:#101311e8;display:flex;align-items:center;justify-content:center;padding:20px;z-index:10}
+.panel{width:min(440px,100%);background:#d9d0ad;color:#20211e;border:6px double #393a34;padding:16px;box-shadow:0 10px 35px #000b}
+.actions{display:flex;gap:7px;flex-wrap:wrap}.actions button{flex:1;padding:12px;font-family:inherit;font-weight:bold}
+#enemyArt{font-size:54px;text-align:center}
