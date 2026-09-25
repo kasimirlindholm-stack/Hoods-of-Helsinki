@@ -66,6 +66,8 @@ function draw(){
 }
 function cellAt(x,y){let cx=Math.floor(x/T),cy=Math.floor(y/T);return maps[area][cy]?.[cx]||'B'}
 function blocked(x,y){return 'TBH'.includes(cellAt(x,y))}
+function playerBlocked(x,y){let r=6;return blocked(x-r,y-r)||blocked(x+r,y-r)||blocked(x-r,y+r)||blocked(x+r,y+r)}
+function nudgeToFree(){if(!playerBlocked(p.x,p.y))return;for(let rad=8;rad<=T*3;rad+=8)for(let a=0;a<Math.PI*2;a+=Math.PI/8){let x=p.x+Math.cos(a)*rad,y=p.y+Math.sin(a)*rad;if(!playerBlocked(x,y)){p.x=x;p.y=y;return}}}
 let joy={x:0,y:0,active:false,id:null};const j=document.querySelector('#joy'),s=document.querySelector('#stick');
 function setJoy(ev){let r=j.getBoundingClientRect(),dx=ev.clientX-(r.left+r.width/2),dy=ev.clientY-(r.top+r.height/2),d=Math.hypot(dx,dy),m=40;if(d>m){dx*=m/d;dy*=m/d}joy.x=dx/m;joy.y=dy/m;s.style.transform='translate('+dx+'px,'+dy+'px)'}
 function startJoy(ev){joy.active=true;joy.id=ev.pointerId??'touch';try{if(ev.pointerId!=null)j.setPointerCapture(ev.pointerId)}catch(_){}setJoy(ev)}
@@ -82,9 +84,9 @@ let keys={};addEventListener('keydown',e=>keys[e.key]=1);addEventListener('keyup
 function movement(dt){
  if(portalLock>0)portalLock-=dt;if(battle||bagOpen)return;let dx=joy.x+(keys.ArrowRight?1:0)-(keys.ArrowLeft?1:0),dy=joy.y+(keys.ArrowDown?1:0)-(keys.ArrowUp?1:0),mag=Math.hypot(dx,dy);if(mag<.08)return;if(mag>1){dx/=mag;dy/=mag;mag=1}
  const sp=94*mag,ox=p.x,oy=p.y,nx=p.x+dx*sp*dt,ny=p.y+dy*sp*dt;
- if(!blocked(nx+Math.sign(dx)*p.r,p.y))p.x=nx;if(!blocked(p.x,ny+Math.sign(dy)*p.r))p.y=ny;
+ nudgeToFree();if(!playerBlocked(nx,p.y))p.x=nx;if(!playerBlocked(p.x,ny))p.y=ny;
  let moved=Math.hypot(p.x-ox,p.y-oy);walk+=moved/8;if(Math.abs(dx)>Math.abs(dy))p.face=dx>0?'right':'left';else p.face=dy>0?'down':'up';
- let ch=cellAt(p.x,p.y);if(portalLock<=0&&area==='home'&&ch==='>'){area='malmi';p.x=25.5*T;p.y=9.5*T;portalLock=1.5;release();msg('MALMI. Sade alkaa melkein välittömästi. Tutki asemaa, puistoa ja alikulkua.');}
+ let ch=cellAt(p.x,p.y);if(portalLock<=0&&area==='home'&&ch==='>'){area='malmi';p.x=26.5*T;p.y=10.5*T;portalLock=1.5;release();msg('MALMI. Sade alkaa melkein välittömästi. Tutki asemaa, puistoa ja alikulkua.');}
  else if(portalLock<=0&&area==='malmi'&&ch==='<'){area='home';p.x=7.5*T;p.y=5.5*T;p.hp=p.max;portalLock=1.5;release();msg('Takaisin Torpparinmäessä. HP palautui.');}
  hud()
 }
@@ -142,7 +144,7 @@ function drawSurvivor(){
  for(const m of mobs){let x=m.x-cam.x,y=m.y-cam.y;rect(x-8,y-10,16,18,m.col);rect(x-6,y-15,12,8,'#c69a7a');rect(x-8,y-20,16,5,'#292725');rect(x-9,y+9,18,3,'#0007');rect(x-9,y-25,18,3,'#191b1a');rect(x-9,y-25,18*(m.hp/m.max),3,'#b9534d')}
  for(const q of shots){let x=q.x-cam.x,y=q.y-cam.y;rect(x-3,y-7,6,13,'#c9b35b');rect(x-2,y-9,4,3,'#ded7b5');rect(x-2,y-3,4,2,'#8b3d34')}
  for(const b of bursts){g.strokeStyle='#e9d58a';g.lineWidth=3;g.beginPath();g.arc(b.x-cam.x,b.y-cam.y,b.r,0,Math.PI*2);g.stroke()}
- g.fillStyle='#efe2aa';g.font='bold 10px monospace';g.fillText('KOFF-THROW '+Math.max(0,skillClock).toFixed(1)+'s',8,H-8);g.fillStyle='#fff';g.fillText('JOY '+joy.x.toFixed(2)+' / '+joy.y.toFixed(2)+(joy.active?' ON':' OFF'),300,H-8);
+ g.fillStyle='#efe2aa';g.font='bold 10px monospace';g.fillText('KOFF-THROW '+Math.max(0,skillClock).toFixed(1)+'s',8,H-8);
  if(bagOpen){rect(55,35,370,245,'#171a18ee');g.strokeStyle='#c7b574';g.lineWidth=3;g.strokeRect(55,35,370,245);g.fillStyle='#eadca6';g.font='bold 18px monospace';g.fillText('BAG',75,65);g.font='12px monospace';let y=92,items=Object.entries(bag);if(!items.length)g.fillText('(tyhjä)',75,y);for(const [name,n] of items){g.fillText(name+'  x'+n,75,y);y+=22}g.fillStyle='#9fa69f';g.font='10px monospace';g.fillText('A = sulje',75,258)}
 }
 function msg(t){document.querySelector('#message').textContent=t}function hud(){place.textContent=area==='home'?'TORPPARINMÄKI':'MALMI';hp.textContent=p.hp;lvl.textContent=p.lvl;cash.textContent=p.cash}
