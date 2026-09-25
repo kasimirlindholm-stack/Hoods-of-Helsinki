@@ -68,9 +68,16 @@ function cellAt(x,y){let cx=Math.floor(x/T),cy=Math.floor(y/T);return maps[area]
 function blocked(x,y){return 'TBH'.includes(cellAt(x,y))}
 let joy={x:0,y:0,active:false,id:null};const j=document.querySelector('#joy'),s=document.querySelector('#stick');
 function setJoy(ev){let r=j.getBoundingClientRect(),dx=ev.clientX-(r.left+r.width/2),dy=ev.clientY-(r.top+r.height/2),d=Math.hypot(dx,dy),m=40;if(d>m){dx*=m/d;dy*=m/d}joy.x=dx/m;joy.y=dy/m;s.style.transform='translate('+dx+'px,'+dy+'px)'}
-j.addEventListener('pointerdown',ev=>{joy.active=true;joy.id=ev.pointerId;j.setPointerCapture(ev.pointerId);setJoy(ev)});
-j.addEventListener('pointermove',ev=>{if(joy.active&&ev.pointerId===joy.id)setJoy(ev)});
-function release(){joy.active=false;joy.x=joy.y=0;s.style.transform='translate(0,0)'}j.addEventListener('pointerup',release);j.addEventListener('pointercancel',release);
+function startJoy(ev){joy.active=true;joy.id=ev.pointerId??'touch';try{if(ev.pointerId!=null)j.setPointerCapture(ev.pointerId)}catch(_){}setJoy(ev)}
+function release(){joy.active=false;joy.id=null;joy.x=joy.y=0;s.style.transform='translate(0,0)'}
+j.addEventListener('pointerdown',startJoy);
+j.addEventListener('pointermove',ev=>{if(joy.active&&(joy.id===ev.pointerId||joy.id==='touch'))setJoy(ev)});
+j.addEventListener('pointerup',release);j.addEventListener('pointercancel',release);j.addEventListener('lostpointercapture',release);
+// Android WebView fallback: direct touch controls
+j.addEventListener('touchstart',ev=>{ev.preventDefault();let t=ev.changedTouches[0];joy.active=true;joy.id='touch';setJoy(t)},{passive:false});
+j.addEventListener('touchmove',ev=>{ev.preventDefault();if(joy.active){let t=ev.changedTouches[0];setJoy(t)}},{passive:false});
+j.addEventListener('touchend',ev=>{ev.preventDefault();release()},{passive:false});
+j.addEventListener('touchcancel',release,{passive:false});
 let keys={};addEventListener('keydown',e=>keys[e.key]=1);addEventListener('keyup',e=>keys[e.key]=0);
 function movement(dt){
  if(portalLock>0)portalLock-=dt;if(battle||bagOpen)return;let dx=joy.x+(keys.ArrowRight?1:0)-(keys.ArrowLeft?1:0),dy=joy.y+(keys.ArrowDown?1:0)-(keys.ArrowUp?1:0),mag=Math.hypot(dx,dy);if(mag<.08)return;if(mag>1){dx/=mag;dy/=mag;mag=1}
