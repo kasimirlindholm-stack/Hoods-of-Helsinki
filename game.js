@@ -1,4 +1,4 @@
-const RUNTIME_BUILD=27;
+const RUNTIME_BUILD=28;
 const c=document.querySelector('#game'),g=c.getContext('2d');g.imageSmoothingEnabled=false;
 const W=480,H=320,T=32,C=15,R=10;let area='home',battle=false,last=performance.now(),walk=0,encDist=0,portalLock=0;
 let p={x:7.5*T,y:5.5*T,r:8,hp:30,max:30,lvl:1,xp:0,cash:12,weapon:'Keppi',face:'down'};
@@ -63,8 +63,20 @@ function urbanTile(ch,x,y){
  if(ch==='<'||ch==='>'){
    rect(x,y,T,T,'#565348');rect(x+3,y+3,26,26,'#242827');g.fillStyle='#d7c77e';g.font='bold 18px monospace';g.fillText(ch,x+10,y+22)
  }
- // sidewalks on selected open tiles, varied so the city doesn't look tiled like a bathroom floor
- if(ch==='.'&&((((x/T)|0)+((y/T)|0)*2)%5===0)){rect(x,y+25,T,7,'#656a67');rect(x,y+25,T,2,'#818682')}
+ // Coherent streets: broad asphalt lanes with continuous sidewalks and markings.
+ if(ch==='.'){
+   const gx=(x/T)|0,gy=(y/T)|0;
+   const vertical=(gx>=14&&gx<=16)||(gx>=25&&gx<=27);
+   const horizontal=(gy>=5&&gy<=6)||(gy>=10&&gy<=11);
+   if(vertical||horizontal){
+     rect(x,y,T,T,'#303534');
+     if(vertical){rect(x,y,5,T,'#6b706d');rect(x+27,y,5,T,'#6b706d');if(gy%2===0)rect(x+15,y+8,2,12,'#b3aa76')}
+     if(horizontal){rect(x,y,T,5,'#6b706d');rect(x,y+27,T,5,'#6b706d');if(gx%2===0)rect(x+8,y+15,12,2,'#b3aa76')}
+   }else{
+     rect(x,y,T,T,'#555b59');rect(x,y+27,T,5,'#676d69');
+     if((gx*11+gy*17)%13===0)rect(x+5,y+8,3,2,'#343938');
+   }
+ }
  return true
 }
 function tile(ch,x,y){
@@ -85,9 +97,11 @@ function player(){
  if(p.face==='up'){rect(X-6,Y-17,12,6,'#332824')}
  if(side){rect(X+flip*4-1,Y-14,2,2,'#27231f');rect(X+flip*6-1,Y-5,3,8,'#d4a27d')}
  else{rect(X-9,Y-6,3,9,'#d4a27d');rect(X+6,Y-6,3,9,'#d4a27d')}
- rect(X-5,Y+12+(step?0:1),5,2,'#111518');rect(X+1,Y+12+(step?1:0),5,2,'#111518')
+ rect(X-5,Y+12+(step?0:1),5,2,'#111518');rect(X+1,Y+12+(step?1:0),5,2,'#111518');
+ // Player HP bar
+ const bw=28,bx=X-bw/2,by=Y-28,ratio=Math.max(0,Math.min(1,p.hp/p.max));rect(bx-1,by-1,bw+2,6,'#111');rect(bx,by,bw,4,'#54282d');rect(bx,by,bw*ratio,4,ratio>.5?'#6fb36b':ratio>.25?'#d0a34f':'#c85858');
 }
-function camera(){if(area==='home')return{x:0,y:0};let mw=maps.malmi[0].length*T,mh=maps.malmi.length*T;return{x:Math.max(0,Math.min(mw-W,p.x-W/2)),y:Math.max(0,Math.min(mh-H,p.y-H/2))}}
+function camera(){if(area==='home')return{x:0,y:0};let mw=maps.malmi[0].length*T,mh=maps.malmi.length*T;return{x:Math.round(Math.max(0,Math.min(mw-W,p.x-W/2))),y:Math.round(Math.max(0,Math.min(mh-H,p.y-H/2)))}}
 function draw(){
  // Clear the whole viewport every frame so moving sprites/projectiles never leave trails.
  g.clearRect(0,0,W,H);rect(0,0,W,H,area==='home'?'#719b58':'#3f4543');
