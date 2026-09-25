@@ -1,10 +1,11 @@
 const { test, expect } = require('@playwright/test');
 
-test('Build 33 Malmi zones render and stay world-anchored', async ({ page }) => {
+test('Build 34 Malmi zones render and stay world-anchored', async ({ page }) => {
   const errors=[]; page.on('pageerror',e=>errors.push(e.message));
   await page.goto('http://127.0.0.1:4173/index.html');
   await expect(page.locator('canvas#game')).toBeVisible();
-  await expect(page.locator('h1 small')).toContainText('BUILD 33');
+  const box=await page.locator('canvas#game').boundingBox(); expect(box.height).toBeGreaterThan(600);
+  await expect(page.locator('h1 small')).toContainText('BUILD 34');
   const r=await page.evaluate(()=>{
     area='malmi'; mobs=[]; shots=[]; drops=[]; bursts=[];
     p.x=4.5*T;p.y=10.5*T; const yla=malmiZone(); draw();
