@@ -1,4 +1,4 @@
-const RUNTIME_BUILD=26;
+const RUNTIME_BUILD=27;
 const c=document.querySelector('#game'),g=c.getContext('2d');g.imageSmoothingEnabled=false;
 const W=480,H=320,T=32,C=15,R=10;let area='home',battle=false,last=performance.now(),walk=0,encDist=0,portalLock=0;
 let p={x:7.5*T,y:5.5*T,r:8,hp:30,max:30,lvl:1,xp:0,cash:12,weapon:'Keppi',face:'down'};
@@ -31,30 +31,49 @@ function stone(x,y){rect(x+5,y+16,22,10,'#55605a');rect(x+8,y+12,17,8,'#737e76')
 function flower(x,y){rect(x,y,2,2,'#f4e8a0');rect(x+2,y+2,2,2,'#d77878');rect(x,y+3,1,3,'#37683d')}
 function bush(x,y){rect(x+2,y+10,28,13,'#315f39');rect(x+5,y+5,22,14,'#477d45');rect(x+9,y+3,9,5,'#5d9555');rect(x+6,y+9,3,3,'#73a766');rect(x+21,y+11,3,3,'#2a5533')}
 function lamp(x,y){rect(x+15,y+8,3,22,'#3b3b38');rect(x+12,y+6,9,4,'#4b4b46');rect(x+13,y+3,7,5,'#ffe59a');rect(x+14,y+4,5,3,'#fff1b9')}
-const urbanSheet=new Image();urbanSheet.src='assets/urban/tilemap_packed.png?v=21';
-function urban(id,x,y){if(!urbanSheet.complete||!urbanSheet.naturalWidth)return false;const sx=(id%27)*16,sy=Math.floor(id/27)*16;g.drawImage(urbanSheet,sx,sy,16,16,Math.round(x),Math.round(y),T,T);return true}
+const urbanSheet=new Image();urbanSheet.src='assets/urban/tilemap_packed.png?v=27';
+// Malmi gets its own dark city renderer. Kenney props can still be layered later,
+// but the street/building structure no longer depends on guessed spritesheet indices.
+function cityNoise(x,y,n=3){
+ for(let i=0;i<n;i++){let q=Math.abs(((x/T*37+y/T*71+i*19)*997)%29);rect(x+2+q,y+4+(q*7)%23,2,1,'#59605e')}
+}
 function urbanTile(ch,x,y){
- // Base pavement keeps every Malmi tile coherent; details are layered from the same 16x16 sheet.
- let base=224;if(ch==='z')base=0;if(ch==='#')base=189;if(ch==='B')base=270;if(ch==='A')base=224;if(ch==='<'||ch==='>')base=224;
- if(!urban(base,x,y))return false;
- if(ch==='B'){urban(297,x,y);urban(324,x,y)}
- if(ch==='A')urban(166,x,y);
- if(ch==='z'&&(((x/T)+(y/T))%4===0))urban(234,x,y);
- if(ch==='#'&&(((x/T)|0)%3===1))urban(217,x,y);
- if(ch==='<'||ch==='>'){urban(421,x,y);g.fillStyle='#fff';g.font='bold 12px monospace';g.fillText(ch,x+12,y+20)}
+ // asphalt base
+ rect(x,y,T,T,'#3e4443');cityNoise(x,y,2);
+ if(ch==='z'){ // neglected park / alley
+   rect(x,y,T,T,'#293b32');rect(x,y+25,T,7,'#303634');
+   if((((x+y)/T)|0)%3===0){rect(x+5,y+7,18,11,'#334d3c');rect(x+9,y+3,11,10,'#3f6047');rect(x+13,y+15,4,10,'#403a31')}
+ }
+ if(ch==='#'){ // rail / underpass
+   rect(x,y,T,T,'#242827');rect(x,y+7,T,4,'#777873');rect(x,y+21,T,4,'#777873');
+   rect(x,y+9,T,2,'#171918');rect(x,y+23,T,2,'#171918');
+   rect(x+4,y,T,32,'#4c504e');rect(x+24,y,T,32,'#4c504e')
+ }
+ if(ch==='B'){ // dark apartment/building block
+   rect(x,y,T,T,'#202423');rect(x+2,y+2,28,30,'#555a59');rect(x+4,y+4,24,28,'#454a49');
+   const lit=(((x/T)*13+(y/T)*7)|0)%5===0;
+   rect(x+6,y+8,7,7,lit?'#c6a35f':'#263132');rect(x+19,y+8,7,7,'#273334');
+   rect(x+6,y+19,7,7,'#273334');rect(x+19,y+19,7,7,lit?'#b49355':'#252e30');
+   rect(x+14,y+19,4,13,'#242827')
+ }
+ if(ch==='A'){ // street light / station marker
+   rect(x+15,y+7,3,25,'#202423');rect(x+10,y+5,13,4,'#555c5a');rect(x+12,y+4,9,3,'#d4b96e');
+   rect(x+8,y+30,19,2,'#252928')
+ }
+ if(ch==='<'||ch==='>'){
+   rect(x,y,T,T,'#565348');rect(x+3,y+3,26,26,'#242827');g.fillStyle='#d7c77e';g.font='bold 18px monospace';g.fillText(ch,x+10,y+22)
+ }
+ // sidewalks on selected open tiles, varied so the city doesn't look tiled like a bathroom floor
+ if(ch==='.'&&((((x/T)|0)+((y/T)|0)*2)%5===0)){rect(x,y+25,T,7,'#656a67');rect(x,y+25,T,2,'#818682')}
  return true
 }
 function tile(ch,x,y){
- const h=area==='home';if(!h&&urbanTile(ch,x,y))return;rect(x,y,T,T,h?'#719b58':'#4b5250');
- if(h){for(let i=0;i<4;i++){let q=(x*3+y*7+i*11)%27;px(x+3+q,y+4+(q*5)%23,i%2?'#83aa67':'#628b4d')}}else{for(let i=0;i<3;i++){let q=(x*5+y*3+i*13)%27;px(x+2+q,y+5+(q*7)%22,'#5b625f')}}
+ const h=area==='home';if(!h){urbanTile(ch,x,y);return}rect(x,y,T,T,'#719b58');
+ for(let i=0;i<4;i++){let q=(x*3+y*7+i*11)%27;px(x+3+q,y+4+(q*5)%23,i%2?'#83aa67':'#628b4d')}
  if(ch==='.'&&h){rect(x,y+12,T,10,'#bda875');rect(x,y+12,T,2,'#d0bd8b');rect(x,y+20,T,2,'#9e8c63');for(let i=0;i<3;i++)rect(x+4+i*11,y+16,6,2,'#d7c797');if(((x+y)/T)%3===0)flower(x+4,y+4)}
- if(ch==='T'){rect(x+12,y+16,7,15,h?'#684a31':'#393c38');rect(x+3,y+7,26,14,h?'#356b3b':'#303c36');rect(x+7,y+2,19,18,h?'#4e884d':'#3d4a41');rect(x+11,y,12,7,h?'#61985b':'#465449');rect(x+5,y+10,4,4,h?'#79ad68':'#566258')}
- if(ch==='H'){rect(x+1,y+14,30,18,'#bd8157');rect(x+3,y+16,26,2,'#d69a6b');rect(x-2,y+8,36,7,'#5a3b35');rect(x+2,y+4,28,6,'#70463c');rect(x+5,y+2,22,4,'#855448');rect(x+7,y+20,8,8,'#e7bd6b');rect(x+9,y+22,4,4,'#fff0ae');rect(x+20,y+19,8,13,'#5e4032');rect(x+22,y+22,2,2,'#d9ad66');rect(x+1,y+30,30,2,'#704a38')}
- if(ch==='B'){rect(x,y+5,T,27,'#474b4a');rect(x+3,y+9,7,6,'#786b52');rect(x+17,y+9,8,6,'#665e50');rect(x+6,y+22,18,10,'#343735')}
- if(ch==='#'){rect(x,y+8,T,18,'#292d2c');rect(x,y+10,T,2,'#74746c');rect(x+3,y+24,8,2,'#161817')}
- if(ch==='z'){rect(x,y,T,T,'#292e2d');rect(x+2,y+3,12,4,'#202322');rect(x+18,y+20,10,3,'#1e2220');rect(x+20,y+5,5,5,'#6b6049')}
- if(ch==='A'){rect(x+14,y+7,4,25,'#404442');rect(x+8,y+5,17,10,'#686d69');rect(x+10,y+7,13,6,'#d1b157');rect(x+12,y+9,9,2,'#f1d67e')}
- if(ch==='>'||ch==='<'){rect(x,y,T,T,h?'#d5bd75':'#77705a');g.fillStyle='#292b28';g.font='bold 18px monospace';g.fillText(ch,x+10,y+22)}
+ if(ch==='T'){rect(x+12,y+16,7,15,'#684a31');rect(x+3,y+7,26,14,'#356b3b');rect(x+7,y+2,19,18,'#4e884d');rect(x+11,y,12,7,'#61985b');rect(x+5,y+10,4,4,'#79ad68')}
+ if(ch==='H'){rect(x+1,y+14,30,18,'#bd8157');rect(x+3,y+16,26,2,'#d69a6b');rect(x-2,y+8,36,7,'#5a3b35');rect(x+2,y+4,28,6,'#70463c');rect(x+5,y+2,22,4,'#855448');rect(x+7,y+20,8,8,'#e7bd6b');rect(x+20,y+19,8,13,'#5e4032')}
+ if(ch==='>'||ch==='<'){rect(x,y,T,T,'#d5bd75');g.fillStyle='#292b28';g.font='bold 18px monospace';g.fillText(ch,x+10,y+22)}
 }
 function player(){
  let cam=camera(),X=Math.round(p.x-cam.x),Y=Math.round(p.y-cam.y),step=Math.floor(walk)%2,side=p.face==='left'||p.face==='right',flip=p.face==='left'?-1:1;
